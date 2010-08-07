@@ -82,7 +82,7 @@ pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_hand
 
 				if (provider.find_first("Python") == -1)
 				{
-					//buffer = list[i]->lookup_one(i, p, p_status, p_abort);
+					buffer = list[i]->lookup_one(i, p, p_status, p_abort);
 					
 					if (buffer != "")
 						break;
