@@ -1,0 +1,142 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "atlres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_TAGGER DIALOGEX 0, 0, 435, 227
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "&Update File Tags",IDC_BUTTON_UPDATE,308,209,64,14
+    PUSHBUTTON      "&Cancel",IDC_BUTTON_CLOSE,375,209,50,14
+    CONTROL         "",IDC_LIST_FILES,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,4,7,247,199
+    EDITTEXT        IDC_EDIT_LYRIC,255,7,176,199,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "",IDC_SPLITTER,252,7,2,216,0,WS_EX_TRANSPARENT
+END
+
+IDD_DIALOG_CONF_MAIN DIALOGEX 0, 0, 266, 250
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Lyrics Grabber Configuration"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,150,229,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,209,229,50,14
+    COMBOBOX        IDC_COMBO_PROXYTYPE,94,125,90,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Proxy requires Authentication",IDC_CHECK_NEED_AUTH,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,46,166,111,10
+    EDITTEXT        IDC_EDIT_PROXY_HOST_PORT,94,146,90,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_PROXY_USERNAME,94,182,90,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_PROXY_PASSWORD,94,202,90,14,ES_PASSWORD | ES_AUTOHSCROLL
+    COMBOBOX        IDC_COMBO_PREF_PROVIDER,94,20,90,32,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Options...",IDC_BUTTON_PREF_PROVIDER,189,19,50,14
+    RTEXT           "Provider:",IDC_STATIC,14,22,72,8
+    RTEXT           "Username:",IDC_STATIC,14,185,72,8
+    RTEXT           "Password:",IDC_STATIC,14,204,72,8
+    GROUPBOX        "Provider",IDC_STATIC,7,7,252,38
+    GROUPBOX        "Save",IDC_STATIC,7,48,252,62
+    EDITTEXT        IDC_EDIT_LYRIC_FIELD,94,60,90,14,ES_AUTOHSCROLL
+    RTEXT           "Lyric field:",IDC_STATIC,14,63,72,8
+    GROUPBOX        "Proxy",IDC_STATIC,7,113,252,110
+    RTEXT           "Proxy type:",IDC_STATIC,14,127,72,8
+    RTEXT           "Host:",IDC_STATIC,14,149,72,8
+    LTEXT           "<address>:<port>",IDC_STATIC,189,149,64,8
+    CONTROL         "Skip tracks which contain lyric field already",IDC_CHECK_SKIP_PRESENT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,80,152,10
+    CONTROL         "Quite mode",IDC_CHECK_QUITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,95,79,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_DIALOG_TAGGER, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 431
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 223
+    END
+
+    IDD_DIALOG_CONF_MAIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 259
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 243
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""atlres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU_MAIN_CONF_DROPDOWN MENU 
+BEGIN
+    POPUP "Popup"
+    BEGIN
+        MENUITEM "&Setting",                    ID_POPUP_SETTING
+        MENUITEM "&About",                      ID_POPUP_ABOUT
+        MENUITEM "&Website",                    ID_POPUP_WEBSITE
+    END
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+

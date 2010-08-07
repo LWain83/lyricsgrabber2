@@ -1,0 +1,21 @@
+1. Before Update:
+  If you have previous version installed, make sure you have removed grabber_python\ in your foobar2000 profile folder
+
+2. Install:
+  (1)Make sure you have foo_lyricsgrabber installed already
+  (2)Put python25.dll into foobar2000\ directory
+  (3)Put foo_grabber_python.dll into foobar2000\components\ directory
+  (4)Copy pygrabber directory and all its contents to foobar2000\ directory
+
+  foo_grabber_python will create pygrabber/scripts and pygrabber/libs in your foobar2000 profile folder at startup.
+
+3. After Installation or After Updating
+  Right click on a track: "Lyrics Grabber" => "Configuration...", In "Provider", select "Python".
+  Then, in the foo_grabber_python configuration window, click "Refresh" button, in order to have all scripts updated.
+
+4. Directory Structure:
+  Directory                                         Description
+  (foobar2000 folder)\pygrabber\system              Python standard library, extensions and helper modules
+  (foobar2000 folder)\pygrabber\scripts             Scripts which distribution
+  (foobar2000 profile folder)\pygrabber\libs        User python libraries and extension
+  (foobar2000 profile folder)\pygrabber\scripts     User scripts
