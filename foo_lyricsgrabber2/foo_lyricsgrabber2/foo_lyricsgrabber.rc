@@ -65,7 +65,7 @@ BEGIN
     LTEXT           "<address>:<port>",IDC_STATIC,189,149,64,8
     CONTROL         "Skip tracks which contain lyric field already",IDC_CHECK_SKIP_PRESENT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,80,152,10
-    CONTROL         "Quite mode",IDC_CHECK_QUITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,95,79,10
+    CONTROL         "Quiet mode",IDC_CHECK_QUITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,50,95,79,10
 END
 
 

@@ -15,10 +15,11 @@
 
 4. Directory Structure:
   Directory                                         Description
-  (foobar2000 folder)\pygrabber\system              Python standard library, extensions and helper modules
-  (foobar2000 folder)\pygrabber\scripts             Scripts which distribution
+  (foobar2000 profile folder)\pygrabber\system      Python standard library, extensions and helper modules
   (foobar2000 profile folder)\pygrabber\libs        User python libraries and extension
   (foobar2000 profile folder)\pygrabber\scripts     User scripts
+
+  NOTE: You can reach your profile folder if you type this in the addressbar of Windows Explorer: %appdata%\Foobar2000
 
 5. Remark:
   The "Search All" option in the context menu searches for lyrics using all available built-in lyrics providers.

@@ -39,7 +39,6 @@ grabber::provider_ptr_list & host_impl::g_get_provider_list()
 	return provider_ptr_list;
 }
 
-
 grabber::config_item & host_impl::g_get_config_ref()
 {
 	return g_cfg_lyrics_grabber.val();
