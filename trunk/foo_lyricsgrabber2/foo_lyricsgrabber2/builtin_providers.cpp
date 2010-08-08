@@ -10,8 +10,9 @@
 #include "host_impl.h"
 
 
-static grabber::provider_factory<provider_lyricsplugin> g_lyricsplugin;
+//static grabber::provider_factory<provider_lyricsplugin> g_lyricsplugin;
 static grabber::provider_factory<provider_searchall> g_searchall;
+static grabber::provider_factory<provider_darklyrics> g_darklyrics;
 
 FORCEINLINE void how_to_sleep(t_size p_items)
 {
@@ -71,23 +72,28 @@ pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_hand
 			}
 
 			p_status.set_item_path(path);
-			p_status.set_progress(i + 1, p_meta.get_count());
 
-			for (t_size i = 0; i < list.get_count(); i++)
+			for (t_size j = 0; j < list.get_count(); j++)
 			{
-				if (list[i] == this)
+				if (list[j] == this)
 					continue;
 
-				list[i]->get_provider_name(provider);
+				p_status.set_progress((i+1)*(j+1), p_meta.get_count() * list.get_count());
+
+				list[j]->get_provider_name(provider);
 
 				if (provider.find_first("Python") == -1)
 				{
-					buffer = list[i]->lookup_one(i, p, p_status, p_abort);
+				console::print(provider);
+					buffer = list[j]->lookup_one(j, p, p_status, p_abort);
 					
 					if (buffer != "")
 						break;
 				}
 			}	
+
+			p_status.set_progress(i + 1, p_meta.get_count());
+
 			str_list->add_item(buffer);
 		}
 	}
@@ -235,7 +241,6 @@ pfc::string_list_impl * provider_lyricsplugin::lookup(unsigned p_index, metadb_h
 					continue;
 				}
 			}
-
 			str_list->add_item("");
 		}
 	}
@@ -278,16 +283,6 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 			return "";
 		}
 
-		// Set progress
-		pfc::string8_fast path = file_path_canonical(p->get_path());
-
-		// add subsong index?
-		if (p->get_subsong_index() > 0)
-		{
-			path.add_string(" /index:");
-			path.add_string(pfc::format_uint(p->get_subsong_index()));
-		}
-
 		pfc::string8_fast artist, title;
 		static_api_ptr_t<titleformat_compiler> compiler;
 		service_ptr_t<titleformat_object> script;
@@ -322,6 +317,7 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 		}
 		catch (pfc::exception & e)
 		{
+			console_error(e.what());
 			return "";
 		}
 		catch (...)
@@ -377,6 +373,351 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 	return "";
 }
 
+//************************************************************************
+//*                             Dark Lyrics                              *
+//************************************************************************
+pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	const float threshold = 0.8f;
 
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+	MatchResult match;
+
+	// Buffer
+	pfc::string8 buff;
+	pfc::string_list_impl * str_list = new pfc::string_list_impl;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		for (t_size i = 0; i < p_meta.get_count(); ++i)
+		{
+			if (p_abort.is_aborting())
+				break;
+
+			// Sleep
+			how_to_sleep(i);
+			// Clear buff
+			buff.reset();
+
+			const metadb_handle_ptr & p = p_meta.get_item(i);
+
+			if (p.is_empty())
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+			// Set progress
+			pfc::string8_fast path = file_path_canonical(p->get_path());
+
+			// add subsong index?
+			if (p->get_subsong_index() > 0)
+			{
+				path.add_string(" /index:");
+				path.add_string(pfc::format_uint(p->get_subsong_index()));
+			}
+
+			p_status.set_item_path(path);
+			p_status.set_progress(i + 1, p_meta.get_count());
+
+			pfc::string8_fast artist, title, album, keywords;
+			static_api_ptr_t<titleformat_compiler> compiler;
+			service_ptr_t<titleformat_object> script;
+
+			// Get ARTIST
+			compiler->compile_safe(script, "[%artist%]");
+			p->format_title(NULL, artist, script, NULL);
+			// Get ARTIST
+			compiler->compile_safe(script, "[%album%]");
+			p->format_title(NULL, album, script, NULL);
+			// Get TITLE
+			compiler->compile_safe(script, "[%title%]");
+			p->format_title(NULL, title, script, NULL);
+
+			//Fetching from HTTP
+			// Set HTTP Address
+			pfc::string8_fast url("http://www.darklyrics.com/lyrics/");
+			
+			// URL = http://www.darklyrics.com/lyrics/ensiferum/victorysongs.html
+
+			string_helper::convert_to_lower_case(artist);
+			string_helper::convert_to_lower_case(album);
+			string_helper::remove_char(album, ' ');
+
+			url += fetcher.quote(artist);
+			url += "/";
+			url += fetcher.quote(album);
+			url += ".html";
+
+			// Get it now
+			try
+			{
+				fetcher.fetch(url, buff);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				str_list->add_item("");
+				continue;
+			}
+			catch (...)
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+
+			const char * regex_ahref = "<a\\shref=\"#(?P<no>\\d+)\">(?P<text>.+?)</a>";
+
+			// expression for extract lyrics
+			regexp.Compile(regex_ahref, IGNORECASE);
+
+			// match
+			MatchResult result = regexp.Match(buff.get_ptr());
+
+			int noGroup = regexp.GetNamedGroupNumber("no");
+			int textGroup = regexp.GetNamedGroupNumber("text");
+	
+			int jump_to = 0;
+			pfc::string8_fast compare = title;
+			compare.insert_chars(0, ". ");
+			float good;
+			float best = 0.0f;
+
+
+			while (result.IsMatched())
+			{
+				int gStart = result.GetGroupStart(noGroup);
+				int gEnd = result.GetGroupEnd(noGroup);
+				pfc::string8_fast temp(buff.get_ptr() + gStart, gEnd - gStart);
+				int no = StrToIntA(temp);
+
+				gStart = result.GetGroupStart(textGroup);
+				gEnd = result.GetGroupEnd(textGroup);
+
+				temp = pfc::string8_fast(buff.get_ptr()+gStart, gEnd - gStart);
+
+				int levDist = LD(compare, compare.get_length(), temp, temp.get_length());
+
+				good = 1.0f - (levDist / (float)compare.get_length());
+
+				if (good >= threshold && good > best)
+				{
+					jump_to = no;
+					best = good;
+				}
+				result = regexp.Match(buff.get_ptr(),result.GetEnd());
+			}
+
+			if (jump_to == 0)
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+			char regex_lyrics[100];
+
+			sprintf(regex_lyrics, "<a\\s+name=%d><font*(.*?)</font*(.*?)>(?P<lyrics>.+?)<font", jump_to);
+
+			// expression for extract lyrics
+			regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
+
+			noGroup = regexp.GetNamedGroupNumber("lyrics");
+
+			result = regexp.Match(buff.get_ptr());
+
+			if (result.IsMatched())
+			{
+				int nStart = result.GetGroupStart(noGroup);
+				int nEnd = result.GetGroupEnd(noGroup);
+				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+				convert_html_to_plain(lyric);
+
+				lyric.remove_chars(0, 4);
+				lyric.remove_chars(lyric.get_length()-4, 4);
+
+				if (string_trim(lyric).get_length() > 0)
+				{
+					str_list->add_item(lyric);
+					continue;
+				}
+			}
+
+			str_list->add_item("");
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		delete str_list;
+		return NULL;
+	}
+	catch (...)
+	{
+		delete str_list;
+		return NULL;
+	}
+
+	return str_list;
+}
+pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	const float threshold = 0.8f;
+
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+	MatchResult match;
+
+	// Buffer
+	pfc::string8 buff;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		const metadb_handle_ptr & p = p_meta;
+
+		if (p.is_empty())
+		{
+			return "";
+		}
+
+		pfc::string8_fast artist, title, album;
+		static_api_ptr_t<titleformat_compiler> compiler;
+		service_ptr_t<titleformat_object> script;
+
+		// Get ARTIST
+		compiler->compile_safe(script, "[%artist%]");
+		p->format_title(NULL, artist, script, NULL);
+		// Get ARTIST
+		compiler->compile_safe(script, "[%album%]");
+		p->format_title(NULL, album, script, NULL);
+		// Get TITLE
+		compiler->compile_safe(script, "[%title%]");
+		p->format_title(NULL, title, script, NULL);
+
+		//Fetching from HTTP
+		// Set HTTP Address
+		pfc::string8_fast url("http://www.darklyrics.com/lyrics/");
+
+		// URL = http://www.darklyrics.com/lyrics/ensiferum/victorysongs.html
+
+		string_helper::convert_to_lower_case(artist);
+		string_helper::convert_to_lower_case(album);
+		string_helper::remove_char(album, ' ');
+
+		url += fetcher.quote(artist);
+		url += "/";
+		url += fetcher.quote(album);
+		url += ".html";
+
+		// Get it now
+		try
+		{
+			fetcher.fetch(url, buff);
+		}
+		catch (pfc::exception & e)
+		{
+			console_error(e.what());
+			return "";
+		}
+		catch (...)
+		{
+			return "";
+		}
+
+		const char * regex_ahref = "<a\\shref=\"#(?P<no>\\d+)\">(?P<text>.+?)</a>";
+
+		// expression for extract lyrics
+		regexp.Compile(regex_ahref, IGNORECASE);
+
+		// match
+		MatchResult result = regexp.Match(buff.get_ptr());
+
+		int noGroup = regexp.GetNamedGroupNumber("no");
+		int textGroup = regexp.GetNamedGroupNumber("text");
+
+		int jump_to = 0;
+		pfc::string8_fast compare = title;
+		compare.insert_chars(0, ". ");
+		float good;
+		float best = 0.0f;
+
+
+		while (result.IsMatched())
+		{
+			int gStart = result.GetGroupStart(noGroup);
+			int gEnd = result.GetGroupEnd(noGroup);
+			pfc::string8_fast temp(buff.get_ptr() + gStart, gEnd - gStart);
+			int no = StrToIntA(temp);
+
+			gStart = result.GetGroupStart(textGroup);
+			gEnd = result.GetGroupEnd(textGroup);
+
+			temp = pfc::string8_fast(buff.get_ptr()+gStart, gEnd - gStart);
+
+			int levDist = LD(compare, compare.get_length(), temp, temp.get_length());
+
+			good = 1.0f - (levDist / (float)compare.get_length());
+
+			if (good >= threshold && good > best)
+			{
+				jump_to = no;
+				best = good;
+			}
+			result = regexp.Match(buff.get_ptr(),result.GetEnd());
+		}
+
+		if (jump_to == 0)
+		{
+			return "";
+		}
+
+		char regex_lyrics[100];
+
+		sprintf(regex_lyrics, "<a\\s+name=%d><font*(.*?)</font*(.*?)>(?P<lyrics>.+?)<font", jump_to);
+
+		// expression for extract lyrics
+		regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
+
+		noGroup = regexp.GetNamedGroupNumber("lyrics");
+
+		result = regexp.Match(buff.get_ptr());
+
+		if (result.IsMatched())
+		{
+			int nStart = result.GetGroupStart(noGroup);
+			int nEnd = result.GetGroupEnd(noGroup);
+			pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+			convert_html_to_plain(lyric);
+
+			lyric.remove_chars(0, 3);
+			lyric.remove_chars(lyric.get_length()-4, 4);
+
+			if (string_trim(lyric).get_length() > 0)
+			{
+				return lyric;
+			}
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		return "";
+	}
+	catch (...)
+	{
+		return "";
+	}
+
+	return "";
+}
 
 #endif

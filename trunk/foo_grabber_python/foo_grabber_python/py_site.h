@@ -129,7 +129,6 @@ public:
 private:
 	void _cleanup();
 
-	pfc::string8 m_grabber_system_path;
 	pfc::string8 m_grabber_profile_path;
 	config_info m_config_info;
 	py_stdout_redirector m_stdout_redirector;

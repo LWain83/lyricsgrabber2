@@ -28,10 +28,6 @@ void py_site::init()
 {
 	insync2(m_cs);
 
-	uGetModuleFileName(NULL, m_grabber_system_path);
-	m_grabber_system_path.truncate(m_grabber_system_path.find_last('\\') + 1);
-	//m_grabber_system_path.fix_dir_separator('\\');
-	m_grabber_system_path += "pygrabber";
 	m_grabber_profile_path = file_path_display(core_api::get_profile_path());
 	m_grabber_profile_path.fix_dir_separator('\\');
 	m_grabber_profile_path += "pygrabber";
@@ -48,15 +44,17 @@ void py_site::init()
 	pfc::string8_fast s;
 
 	// Set sys.path
-	s = m_grabber_system_path;
+	s = m_grabber_profile_path;
 	s << "\\system\\python25.zip;";
-	s << m_grabber_system_path << "\\system;";
+	s << m_grabber_profile_path << "\\system;";
 	s << m_grabber_profile_path << "\\libs";
 
 	if (!m_config_info.extra_libpath.empty())
 	{
 		s << ";" << m_config_info.extra_libpath.c_str();
 	}
+
+	console::print(s);
 
 	PySys_SetPath((char *)string_ansi_from_utf8(s).get_ptr());
 
@@ -111,7 +109,7 @@ void py_site::init()
 		exec(s.get_ptr(), m_global_dict, m_global_dict);
 
 		// Execute autoexec.py
-		s = m_grabber_system_path;
+		s = m_grabber_profile_path;
 		s << "\\system\\autoexec.py";
 		boost::python::exec_file(string_ansi_from_utf8(s).get_ptr(), m_global_dict, m_global_dict);
 	}
@@ -212,11 +210,6 @@ bool py_site::refresh()
 		}
 	}
 
-	if (_strnicmp(m_grabber_profile_path, m_grabber_system_path, m_grabber_system_path.length()) != 0)
-	{
-		enum_scripts(pfc::string_formatter(m_grabber_system_path) << "\\scripts", scripts);
-	}
-	
 	// Validate script
 	for (t_size i = 0; i < scripts.get_count(); i++)
 	{

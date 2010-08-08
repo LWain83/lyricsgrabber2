@@ -8,7 +8,7 @@
 class provider_searchall : public grabber::provider_base
 {
 public:
-	void get_provider_name(pfc::string_base & p_out) { p_out = "All Lyrics"; }
+	void get_provider_name(pfc::string_base & p_out) { p_out = "Search All"; }
 	bool get_provider_description(pfc::string_base & p_out)
 	{ 
 		p_out = "Searches through every provider until lyrics are found";
@@ -74,6 +74,48 @@ public:
 	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
 	{
 		p_out = "Lyrics Plugin";
+	}
+
+	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	pfc::string8 lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	void pointer_delete(void * p) { delete p; }
+
+	void set_config(stream_reader * p_reader, t_size p_size, abort_callback & p_abort)
+	{
+		m_config_item = static_api_ptr_t<grabber::host>()->get_global_config();
+	}
+
+private:
+	grabber::config_item m_config_item;
+};
+
+class provider_darklyrics : public grabber::provider_base
+{
+public:
+	void get_provider_name(pfc::string_base & p_out) { p_out = "Dark Lyrics"; }
+	bool get_provider_description(pfc::string_base & p_out)
+	{ 
+		p_out = "LyricsPlugin.com is a great site providing a good many high quality lyrics for all genres.";
+		return true; 
+	}
+	GUID get_provider_guid()
+	{
+		// {C3CBAFEF-0597-434F-8F02-EF65F507FBD0}
+		static const GUID provider_guid = 
+		{ 0xC3CBAFEF, 0x0597, 0x434F, { 0x8F, 0x02, 0xEF, 0x65, 0xF5, 0x07, 0xFB, 0xD0 } };
+
+		return provider_guid;
+	}
+	bool get_provider_url(pfc::string_base & p_out)
+	{
+		p_out = "http://www.darklyrics.com";
+		return true;
+	}
+
+	unsigned get_menu_item_count() { return 1; }
+	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
+	{
+		p_out = "Dark Lyrics";
 	}
 
 	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);

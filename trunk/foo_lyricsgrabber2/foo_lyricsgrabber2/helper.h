@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdlib.h>
+#include <malloc.h>
+#include <string.h>
 //! Helpers
 
 class string_trim_left {
@@ -52,6 +55,17 @@ public:
 	inline t_size get_length() const {return m_data.get_length();}
 private:
 	pfc::string8_fast m_data;
+};
+
+class string_helper
+{
+public:
+	static void convert_to_lower_case(const pfc::string_base& p_source, pfc::string_base& p_out);
+	static void convert_to_lower_case(pfc::string_base& p_source);
+	static void remove_char(pfc::string_base& p_source, const char p_remove);
+
+private:
+	string_helper() {};
 };
 
 class lev_distance {
@@ -118,3 +132,19 @@ private:
 
 void convert_html_to_plain(pfc::string_base & p_out) throw();
 void decode_html_entities(pfc::string_base & p_out) throw();
+
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+
+// finds the minimum of tree integers
+int _min(int a, int b, int c);
+
+// allocates a 2D array of integers
+int **create_matrix(int Row, int Col);
+
+// deallocates memory
+int **delete_matrix(int **array, int Row, int Col);
+
+// computes the Levenshtein distance between two strings
+// "x" represent the pattern and "y" represent the text
+// "m" is the pattern length and "n" is the text length
+int LD(const char *x, unsigned int m, const char *y, unsigned int n);
