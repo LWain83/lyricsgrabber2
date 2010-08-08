@@ -538,7 +538,11 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 
 				convert_html_to_plain(lyric);
 
-				lyric.remove_chars(0, 4);
+				if (jump_to == 1)
+					lyric.remove_chars(0, 3);
+				else
+					lyric.remove_chars(0, 4);
+
 				lyric.remove_chars(lyric.get_length()-4, 4);
 
 				if (string_trim(lyric).get_length() > 0)
@@ -698,7 +702,11 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 
 			convert_html_to_plain(lyric);
 
-			lyric.remove_chars(0, 3);
+			if (jump_to == 1)
+				lyric.remove_chars(0, 3);
+			else
+				lyric.remove_chars(0, 4);
+
 			lyric.remove_chars(lyric.get_length()-4, 4);
 
 			if (string_trim(lyric).get_length() > 0)
