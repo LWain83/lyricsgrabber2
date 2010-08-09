@@ -78,7 +78,7 @@ pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_hand
 				if (list[j] == this)
 					continue;
 
-				p_status.set_progress((i+1)*(j+1), p_meta.get_count() * list.get_count());
+				p_status.set_progress(i * list.get_count()+(j+1), p_meta.get_count() * list.get_count());
 
 				list[j]->get_provider_name(provider);
 
@@ -91,7 +91,7 @@ pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_hand
 				}
 			}	
 
-			p_status.set_progress(i + 1, p_meta.get_count());
+			p_status.set_progress((i + 1)*(list.get_count()), p_meta.get_count()*list.get_count());
 
 			str_list->add_item(buffer);
 		}
