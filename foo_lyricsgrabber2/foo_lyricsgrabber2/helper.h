@@ -63,6 +63,7 @@ public:
 	static void convert_to_lower_case(const pfc::string_base& p_source, pfc::string_base& p_out);
 	static void convert_to_lower_case(pfc::string_base& p_source);
 	static void remove_char(pfc::string_base& p_source, const char p_remove);
+	static void remove_non_alphanumeric(pfc::string_base& p_source);
 
 private:
 	string_helper() {};

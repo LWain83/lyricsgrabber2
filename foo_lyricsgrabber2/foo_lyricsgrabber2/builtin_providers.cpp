@@ -13,6 +13,7 @@
 //static grabber::provider_factory<provider_lyricsplugin> g_lyricsplugin;
 static grabber::provider_factory<provider_searchall> g_searchall;
 static grabber::provider_factory<provider_darklyrics> g_darklyrics;
+static grabber::provider_factory<provider_azlyrics> g_azlyrics;
 
 FORCEINLINE void how_to_sleep(t_size p_items)
 {
@@ -742,5 +743,264 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 
 	return "";
 }
+
+
+
+
+//************************************************************************
+//*                              AZ Lyrics                               *
+//************************************************************************
+pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+	pfc::string_list_impl * str_list = new pfc::string_list_impl;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		for (t_size i = 0; i < p_meta.get_count(); ++i)
+		{
+			if (p_abort.is_aborting())
+				break;
+
+			// Sleep
+			how_to_sleep(i);
+			// Clear buff
+			buff.reset();
+
+			const metadb_handle_ptr & p = p_meta.get_item(i);
+
+			if (p.is_empty())
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+			// Set progress
+			pfc::string8_fast path = file_path_canonical(p->get_path());
+
+			// add subsong index?
+			if (p->get_subsong_index() > 0)
+			{
+				path.add_string(" /index:");
+				path.add_string(pfc::format_uint(p->get_subsong_index()));
+			}
+
+			p_status.set_item_path(path);
+			p_status.set_progress(i + 1, p_meta.get_count());
+
+			pfc::string8_fast artist, title;
+
+			file_info_impl info;
+			p->get_info(info);
+
+			// Get count of artists
+			t_size count = info.meta_get_count_by_name("artist");
+
+			// Get TITLE
+			title = info.meta_get("title", 0);
+
+			bool found = false;
+
+			// Iterate through all artists listed
+			for (int j = 0; j < count && !found; j++)
+			{
+				// Get Artist
+				artist = info.meta_get("artist", j);
+
+				//Fetching from HTTP
+				// Set HTTP Address
+				pfc::string8_fast url("http://www.azlyrics.com/lyrics/");
+
+				string_helper::convert_to_lower_case(artist);
+				string_helper::convert_to_lower_case(title);
+				string_helper::remove_non_alphanumeric(artist);
+				string_helper::remove_non_alphanumeric(title);
+
+				url += fetcher.quote(artist);
+				url += "/";
+				url += fetcher.quote(title);
+				url += ".html";
+
+				// Get it now
+				try
+				{
+					fetcher.fetch(url, buff);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
+
+
+				const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>(.*?)<br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
+			
+				// expression for extract lyrics
+				regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
+
+				int noGroup = regexp.GetNamedGroupNumber("lyrics");
+				// match
+				MatchResult result = regexp.Match(buff.get_ptr());
+
+				if (result.IsMatched())
+				{
+					int nStart = result.GetGroupStart(noGroup);
+					int nEnd = result.GetGroupEnd(noGroup);
+					pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+					convert_html_to_plain(lyric);
+
+					lyric.remove_chars(0,1);
+
+					if (string_trim(lyric).get_length() > 0)
+					{
+						str_list->add_item(lyric);
+						found = true;
+						continue;
+					}
+				}
+			}
+			if (found)
+				continue;
+			else
+				str_list->add_item("");
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		delete str_list;
+		return NULL;
+	}
+	catch (...)
+	{
+		delete str_list;
+		return NULL;
+	}
+
+	return str_list;
+}
+pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	const float threshold = 0.8f;
+
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		const metadb_handle_ptr & p = p_meta;
+
+		if (p.is_empty())
+		{
+			return "";
+		}
+
+		pfc::string8_fast artist, title, album;
+		static_api_ptr_t<titleformat_compiler> compiler;
+		service_ptr_t<titleformat_object> script;
+
+		file_info_impl info;
+		p->get_info(info);
+
+		// Get count of artists
+		t_size count = info.meta_get_count_by_name("artist");
+
+		// Get TITLE
+		title = info.meta_get("title", 0);
+
+		// Iterate through all artists listed
+		for (int j = 0; j < count; j++)
+		{
+			// Get Artist
+			artist = info.meta_get("artist", j);
+
+			//Fetching from HTTP
+			// Set HTTP Address
+			pfc::string8_fast url("http://www.azlyrics.com/lyrics/");
+
+			string_helper::convert_to_lower_case(artist);
+			string_helper::convert_to_lower_case(title);
+			string_helper::remove_non_alphanumeric(artist);
+			string_helper::remove_non_alphanumeric(title);
+
+			url += fetcher.quote(artist);
+			url += "/";
+			url += fetcher.quote(title);
+			url += ".html";
+
+			// Get it now
+			try
+			{
+				fetcher.fetch(url, buff);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
+			}
+
+			const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>(.*?)<br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
+
+			// expression for extract lyrics
+			regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
+
+			int noGroup = regexp.GetNamedGroupNumber("lyrics");
+
+			MatchResult result = regexp.Match(buff.get_ptr());
+
+			if (result.IsMatched())
+			{
+				int nStart = result.GetGroupStart(noGroup);
+				int nEnd = result.GetGroupEnd(noGroup);
+				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+				convert_html_to_plain(lyric);
+
+				lyric.remove_chars(0, 1);
+
+				if (string_trim(lyric).get_length() > 0)
+				{
+					return lyric;
+				}
+			}
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		return "";
+	}
+	catch (...)
+	{
+		return "";
+	}
+
+	return "";
+}
+
+
+
 
 #endif
