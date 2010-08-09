@@ -172,4 +172,48 @@ public:
 private:
 	grabber::config_item m_config_item;
 };
+
+class provider_lyrdb : public grabber::provider_base
+{
+public:
+	void get_provider_name(pfc::string_base & p_out) { p_out = "LyrDB"; }
+	bool get_provider_description(pfc::string_base & p_out)
+	{ 
+		p_out = "LyrDB contains more than 1,000,000 lyrics and them are catalogued by title and artist. Also, you'll be able to find songs"
+        "arranged with the original CD's. The artists' discography will let you to find the album you were looking for, and you'll"
+        "discover new artists by following LyrDB's suggested related artists.";
+		return true; 
+	}
+	GUID get_provider_guid()
+	{
+		// {CA95529F-7D73-4638-A7AB-E409DA3D0957}
+		static const GUID provider_guid = 
+		{ 0xCA95529F, 0x7D73, 0x4638, { 0xA7, 0xAB, 0xE4, 0x09, 0xDA, 0x3D, 0x09, 0x57 } };
+
+		return provider_guid;
+	}
+	bool get_provider_url(pfc::string_base & p_out)
+	{
+		p_out = "http://www.lyrdb.com";
+		return true;
+	}
+
+	unsigned get_menu_item_count() { return 1; }
+	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
+	{
+		p_out = "LyrDB";
+	}
+
+	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	pfc::string8 lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	void pointer_delete(void * p) { delete p; }
+
+	void set_config(stream_reader * p_reader, t_size p_size, abort_callback & p_abort)
+	{
+		m_config_item = static_api_ptr_t<grabber::host>()->get_global_config();
+	}
+
+private:
+	grabber::config_item m_config_item;
+};
 #endif

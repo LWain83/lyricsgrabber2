@@ -14,6 +14,7 @@
 static grabber::provider_factory<provider_searchall> g_searchall;
 static grabber::provider_factory<provider_darklyrics> g_darklyrics;
 static grabber::provider_factory<provider_azlyrics> g_azlyrics;
+static grabber::provider_factory<provider_lyrdb> g_lyrdb;
 
 FORCEINLINE void how_to_sleep(t_size p_items)
 {
@@ -537,19 +538,17 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 				{
 					int nStart = result.GetGroupStart(noGroup);
 					int nEnd = result.GetGroupEnd(noGroup);
-					pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+					pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
 					convert_html_to_plain(lyric);
 
-					if (jump_to == 1)
-						lyric.remove_chars(0, 3);
-					else
-						lyric.remove_chars(0, 4);
-
-					lyric.remove_chars(lyric.get_length()-4, 4);
-
-					if (string_trim(lyric).get_length() > 0)
+					if (lyric.get_length() > 0)
 					{
+						string_helper::remove_beginning_linebreaks(lyric);
+						string_helper::remove_end_linebreaks(lyric);
+
+						console::print(lyric);
+
 						str_list->add_item(lyric);
 						found = true;
 						continue;
@@ -713,19 +712,14 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 			{
 				int nStart = result.GetGroupStart(noGroup);
 				int nEnd = result.GetGroupEnd(noGroup);
-				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+				pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
 				convert_html_to_plain(lyric);
 
-				if (jump_to == 1)
-					lyric.remove_chars(0, 3);
-				else
-					lyric.remove_chars(0, 4);
-
-				lyric.remove_chars(lyric.get_length()-4, 4);
-
-				if (string_trim(lyric).get_length() > 0)
+				if (lyric.get_length() > 0)
 				{
+					string_helper::remove_beginning_linebreaks(lyric);
+					string_helper::remove_end_linebreaks(lyric);
 					return lyric;
 				}
 			}
@@ -1001,6 +995,334 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 }
 
 
+
+
+//************************************************************************
+//*                                LyrDB                                 *
+//************************************************************************
+pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+	pfc::string_list_impl * str_list = new pfc::string_list_impl;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		for (t_size i = 0; i < p_meta.get_count(); ++i)
+		{
+			if (p_abort.is_aborting())
+				break;
+
+			// Sleep
+			how_to_sleep(i);
+			// Clear buff
+			buff.reset();
+
+			const metadb_handle_ptr & p = p_meta.get_item(i);
+
+			if (p.is_empty())
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+			// Set progress
+			pfc::string8_fast path = file_path_canonical(p->get_path());
+
+			// add subsong index?
+			if (p->get_subsong_index() > 0)
+			{
+				path.add_string(" /index:");
+				path.add_string(pfc::format_uint(p->get_subsong_index()));
+			}
+
+			p_status.set_item_path(path);
+			p_status.set_progress(i + 1, p_meta.get_count());
+
+			pfc::string8_fast artist, title;
+
+			file_info_impl info;
+			p->get_info(info);
+
+			// Get count of artists
+			t_size count = info.meta_get_count_by_name("artist");
+
+			// Get TITLE
+			title = info.meta_get("title", 0);
+
+			bool found = false;
+
+			// Iterate through all artists listed
+			for (int j = 0; j < count && !found; j++)
+			{
+				// Get Artist
+				artist = info.meta_get("artist", j);
+
+				string_helper::remove_non_alphanumeric_keep_space(artist);
+				string_helper::remove_non_alphanumeric_keep_space(title);
+
+				//Fetching from HTTP
+				// Set HTTP Address
+				pfc::string8_fast url("http://webservices.lyrdb.com/lookup.php?q=");
+
+				//URL = http://webservices.lyrdb.com/lookup.php?q=query&for=field&agent=agent
+
+				url += fetcher.quote(artist);
+				url += "|";
+				url += fetcher.quote(title);
+				url += "&for=match&agent=LyricsGrabber2";
+
+				// Get it now
+				try
+				{
+					fetcher.fetch(url, buff);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
+
+				pfc::string_list_impl * lines;
+
+				lines = string_helper::split_lines(buff);
+
+				if (lines == NULL)
+					continue;
+
+				unsigned m = infinite;
+				pfc::string8_fast line, id, ti, ar;
+				pfc::string8_fast best;
+
+				for (int li = 0; li < lines->get_count(); li++)
+				{
+					unsigned d;
+					line = lines->get_item(li);
+					id = pfc::string8_fast(line.get_ptr(), line.find_first('\\'));
+					ti = pfc::string8_fast(line.get_ptr() + line.find_first('\\') +1, line.find_last('\\') - line.find_first('\\')- 1);
+					ar = pfc::string8_fast(line.get_ptr() + line.find_last('\\')+1, line.get_length() - line.find_last('\\') - 1 );
+
+					d = LD(artist, artist.get_length(), ar, ar.get_length()) + LD(title, title.get_length(), ti, ti.get_length());
+
+					if (d < m)
+					{
+						m = d;
+						best = id;
+					}
+				}
+
+				delete lines;
+
+				if (best.get_length() == 0)
+					continue;
+
+				//URL = http://webservices.lyrdb.com/getlyr.php?q=
+
+				url = "http://webservices.lyrdb.com/getlyr.php?q=";
+				url += best;			
+
+				try
+				{
+					fetcher.fetch(url, buff);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
+
+				if (buff.get_length() > 0)
+				{
+					found = true;
+
+					string_helper::remove_beginning_linebreaks(buff);
+					string_helper::remove_end_linebreaks(buff);
+					string_helper::remove_end(buff, '\t');
+					string_helper::remove_end(buff, ' ');
+
+					str_list->add_item(buff);
+					continue;
+				}
+			}
+			if (found)
+				continue;
+			else
+				str_list->add_item("");
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		delete str_list;
+		return NULL;
+	}
+	catch (...)
+	{
+		delete str_list;
+		return NULL;
+	}
+
+	return str_list;
+}
+pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	const float threshold = 0.8f;
+
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		const metadb_handle_ptr & p = p_meta;
+
+		if (p.is_empty())
+		{
+			return "";
+		}
+
+		pfc::string8_fast artist, title, album;
+		static_api_ptr_t<titleformat_compiler> compiler;
+		service_ptr_t<titleformat_object> script;
+
+		file_info_impl info;
+		p->get_info(info);
+
+		// Get count of artists
+		t_size count = info.meta_get_count_by_name("artist");
+
+		// Get TITLE
+		title = info.meta_get("title", 0);
+
+		// Iterate through all artists listed
+		for (int j = 0; j < count; j++)
+		{
+			// Get Artist
+			artist = info.meta_get("artist", j);
+
+			string_helper::remove_non_alphanumeric_keep_space(artist);
+			string_helper::remove_non_alphanumeric_keep_space(title);
+
+			//Fetching from HTTP
+			// Set HTTP Address
+			pfc::string8_fast url("http://webservices.lyrdb.com/lookup.php?q=");
+
+			//URL = http://webservices.lyrdb.com/lookup.php?q=query&for=field&agent=agent
+
+			url += fetcher.quote(artist);
+			url += "|";
+			url += fetcher.quote(title);
+			url += "&for=match&agent=LyricsGrabber2";
+
+			// Get it now
+			try
+			{
+				fetcher.fetch(url, buff);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
+			}
+
+			pfc::string_list_impl * lines;
+
+			lines = string_helper::split_lines(buff);
+
+			if (lines == NULL)
+				continue;
+
+			unsigned m = infinite;
+			pfc::string8_fast line, id, ti, ar;
+			pfc::string8_fast best;
+
+			for (int li = 0; li < lines->get_count(); li++)
+			{
+				unsigned d;
+				line = lines->get_item(li);
+				id = pfc::string8_fast(line.get_ptr(), line.find_first('\\'));
+				ti = pfc::string8_fast(line.get_ptr() + line.find_first('\\') +1, line.find_last('\\') - line.find_first('\\')- 1);
+				ar = pfc::string8_fast(line.get_ptr() + line.find_last('\\')+1, line.get_length() - line.find_last('\\') - 1 );
+
+				d = LD(artist, artist.get_length(), ar, ar.get_length()) + LD(title, title.get_length(), ti, ti.get_length());
+
+				if (d < m)
+				{
+					m = d;
+					best = id;
+				}
+			}
+
+			delete lines;
+
+			if (best.get_length() == 0)
+				continue;
+
+			//URL = http://webservices.lyrdb.com/getlyr.php?q=
+
+			url = "http://webservices.lyrdb.com/getlyr.php?q=";
+			url += best;			
+
+			try
+			{
+				fetcher.fetch(url, buff);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
+			}
+
+			if (buff.get_length() > 0)
+			{
+				string_helper::remove_beginning_linebreaks(buff);
+				string_helper::remove_end_linebreaks(buff);
+				string_helper::remove_end(buff, '\t');
+				string_helper::remove_end(buff, ' ');
+
+				return buff;
+			}
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		return "";
+	}
+	catch (...)
+	{
+		return "";
+	}
+
+	return "";
+}
 
 
 #endif

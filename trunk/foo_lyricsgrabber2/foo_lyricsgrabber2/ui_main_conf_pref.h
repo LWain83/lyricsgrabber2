@@ -63,7 +63,7 @@ private:
 
 class preferences_page_config : public preferences_page_impl<CMainConfPref> {
 public:
-	const char * get_name() {return "Lyrics Grabber";}
+	const char * get_name() {return "Lyrics Grabber 2";}
 	GUID get_guid() {
 		// 85228A00-6D5A-4BAA-AF62-A5EA8D30DC06
 		static const GUID guid = { 0x85228A00, 0x6D5A, 0x4BAA, { 0xAF, 0x62, 0xA5, 0xEA, 0x8D, 0x30, 0xDC, 0x06 } };

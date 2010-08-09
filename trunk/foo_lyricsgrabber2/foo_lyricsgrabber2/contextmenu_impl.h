@@ -46,30 +46,6 @@ private:
 
 static contextmenu_item_factory_t<lyrics_grabber_contextmenu> g_myitem_factory;
 
-// This should be place in the end of root node
-class contextmenu_leaf_conf : public contextmenu_item_node_root_leaf
-{
-public:
-	bool get_display_data(pfc::string_base & p_out,unsigned & p_displayflags,metadb_handle_list_cref p_data,const GUID & p_caller);
-
-	void execute(metadb_handle_list_cref p_data,const GUID & p_caller)
-	{
-		g_show_conf_win();
-	}
-
-	bool get_description(pfc::string_base & p_out) { g_get_description(p_out); return true; }
-	GUID get_guid() { return pfc::guid_null; }
-	bool is_mappable_shortcut() { return true; }
-
-	//
-	static void g_get_name(pfc::string_base & p_out) { p_out = "Configuration..."; }
-	static void g_get_description(pfc::string_base & p_out) { p_out = "Configuration";}
-	static void g_show_conf_win();
-
-private:
-	static CMainConf * g_conf_dlg;
-};
-
 class contextmenu_leaf_look : public contextmenu_item_node_root_leaf
 {
 public:
