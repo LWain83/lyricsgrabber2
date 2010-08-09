@@ -168,6 +168,7 @@
 				AdditionalDependencies="shared.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../shared"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
