@@ -2,11 +2,10 @@
 
 
 DECLARE_COMPONENT_VERSION(
-"Lyrics Grabber",
-"0.3.2.0 Alpha",
-"Lyrics Grabber component for foobar2000 1.0+\n"
-"Created: T.P. Wang\n"
-"Modified: Alexander Endris\n\n"
+"Lyrics Grabber 2",
+"0.3.3.0 Alpha",
+"Lyrics Grabber 2 component for foobar2000 1.0+\n"
+"Created: T.P. Wang, Alexander Endris\n\n"
 "Build: " __DATE__ " " __TIME__
 )
 
