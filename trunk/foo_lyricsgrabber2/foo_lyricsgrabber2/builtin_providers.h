@@ -95,7 +95,7 @@ public:
 	void get_provider_name(pfc::string_base & p_out) { p_out = "Dark Lyrics"; }
 	bool get_provider_description(pfc::string_base & p_out)
 	{ 
-		p_out = "LyricsPlugin.com is a great site providing a good many high quality lyrics for all genres.";
+		p_out = "Dark Lyrics provide many Lyrics in the Metal Genre.";
 		return true; 
 	}
 	GUID get_provider_guid()
@@ -116,6 +116,48 @@ public:
 	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
 	{
 		p_out = "Dark Lyrics";
+	}
+
+	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	pfc::string8 lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	void pointer_delete(void * p) { delete p; }
+
+	void set_config(stream_reader * p_reader, t_size p_size, abort_callback & p_abort)
+	{
+		m_config_item = static_api_ptr_t<grabber::host>()->get_global_config();
+	}
+
+private:
+	grabber::config_item m_config_item;
+};
+
+class provider_azlyrics : public grabber::provider_base
+{
+public:
+	void get_provider_name(pfc::string_base & p_out) { p_out = "AZ Lyrics"; }
+	bool get_provider_description(pfc::string_base & p_out)
+	{ 
+		p_out = "AZ Lyrics.";
+		return true; 
+	}
+	GUID get_provider_guid()
+	{
+		// {943674B6-EC4E-44E2-84CF-7F2315352577}
+		static const GUID provider_guid = 
+		{ 0x943674B6, 0xEC4E, 0x44E2, { 0x84, 0xCF, 0x7F, 0x23, 0x15, 0x35, 0x25, 0x77 } };
+
+		return provider_guid;
+	}
+	bool get_provider_url(pfc::string_base & p_out)
+	{
+		p_out = "http://www.azlyrics.com";
+		return true;
+	}
+
+	unsigned get_menu_item_count() { return 1; }
+	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
+	{
+		p_out = "AZ Lyrics";
 	}
 
 	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
