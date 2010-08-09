@@ -88,7 +88,7 @@ void lyric_lookup_task::on_done(HWND p_wnd,bool p_was_aborted)
 
 	if (!p_was_aborted)
 	{
-		if (host_impl::g_get_config_ref().quite_mode)
+		if (host_impl::g_get_config_ref().quiet_mode)
 		{
 			pfc::list_t<const metadb_handle *> dummy;
 

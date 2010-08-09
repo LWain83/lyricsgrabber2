@@ -14,7 +14,7 @@ BOOL CMainConf::OnInitDialog(HWND wndFocus, LPARAM lInitParam)
 	grabber::config_item & conf = host_impl::g_get_config_ref();
 	uSetDlgItemText(m_hWnd, IDC_EDIT_LYRIC_FIELD, conf.lyric_filed_name);
 	uSendDlgItemMessage(IDC_CHECK_SKIP_PRESENT, BM_SETCHECK, conf.skip_exist ? BST_CHECKED : BST_UNCHECKED);
-	uSendDlgItemMessage(IDC_CHECK_QUITE, BM_SETCHECK, conf.quite_mode ? BST_CHECKED : BST_UNCHECKED);
+	uSendDlgItemMessage(IDC_CHECK_QUIET, BM_SETCHECK, conf.quiet_mode ? BST_CHECKED : BST_UNCHECKED);
 	
 	// Auth
 	uSendDlgItemMessage(IDC_CHECK_NEED_AUTH, BM_SETCHECK, conf.proxy_need_auth ? BST_CHECKED : BST_UNCHECKED);
@@ -91,7 +91,7 @@ bool CMainConf::SaveConfiguration()
 	grabber::config_item & cfg = host_impl::g_get_config_ref();
 	cfg.lyric_filed_name = tmp;
 	cfg.skip_exist = uSendDlgItemMessage(IDC_CHECK_SKIP_PRESENT, BM_GETCHECK) == BST_CHECKED;
-	cfg.quite_mode = uSendDlgItemMessage(IDC_CHECK_QUITE, BM_GETCHECK) == BST_CHECKED;
+	cfg.quiet_mode = uSendDlgItemMessage(IDC_CHECK_QUIET, BM_GETCHECK) == BST_CHECKED;
 
 	// Proxy
 	uGetDlgItemText(m_hWnd, IDC_EDIT_PROXY_HOST_PORT, cfg.proxy_hostport);

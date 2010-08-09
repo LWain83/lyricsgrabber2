@@ -16,17 +16,13 @@
 
 #define _ATL_NO_COM
 
-#include <atlbase.h>
-#include <atlapp.h>
+#include "../../ATLHelpers/ATLHelpers.h"
 
-#include <atlwin.h>
 #include <atlframe.h>
 #include <atldlgs.h>
-#include <atlctrls.h>
 #include <atlctrlx.h>
 #include <atlddx.h>
 #include <atlmisc.h>
-#include <atlcrack.h>
 
 #include "../../SDK/foobar2000.h"
 #include "../../lyrics_grabber_sdk/lyrics_grabber_sdk.h"

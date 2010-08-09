@@ -23,6 +23,6 @@ namespace lyrics_grabber_sdk
 		bool proxy_need_auth;
 		pfc::string8 proxy_hostport, proxy_username, proxy_password;
 		bool skip_exist;
-		bool quite_mode;
+		bool quiet_mode;
 	};
 }
