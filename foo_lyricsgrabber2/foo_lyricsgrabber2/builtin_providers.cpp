@@ -808,19 +808,12 @@ pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handl
 				// Get Artist
 				artist = info.meta_get("artist", j);
 
-				//Fetching from HTTP
-				// Set HTTP Address
-				pfc::string8_fast url("http://www.azlyrics.com/lyrics/");
-
-				string_helper::convert_to_lower_case(artist);
-				string_helper::convert_to_lower_case(title);
-				string_helper::remove_non_alphanumeric(artist);
-				string_helper::remove_non_alphanumeric(title);
+				// Search the lyrics
+				pfc::string8_fast url("http://search.azlyrics.com/search.php?q=");
 
 				url += fetcher.quote(artist);
-				url += "/";
+				url += "+";
 				url += fetcher.quote(title);
-				url += ".html";
 
 				// Get it now
 				try
@@ -837,6 +830,26 @@ pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handl
 					continue;
 				}
 
+				int resultStart = buff.find_first("<b>1.</b>");
+				int startUrl = buff.find_first("<a href=\"", resultStart) + 9;
+				int endUrl = buff.find_first("\"", startUrl);
+
+				url = pfc::string8_fast(buff.get_ptr()+startUrl, endUrl - startUrl);
+
+				// Get it now
+				try
+				{
+					fetcher.fetch(url, buff);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
 
 				const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>(.*?)<br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
 			
@@ -926,19 +939,33 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 			// Get Artist
 			artist = info.meta_get("artist", j);
 
-			//Fetching from HTTP
-			// Set HTTP Address
-			pfc::string8_fast url("http://www.azlyrics.com/lyrics/");
-
-			string_helper::convert_to_lower_case(artist);
-			string_helper::convert_to_lower_case(title);
-			string_helper::remove_non_alphanumeric(artist);
-			string_helper::remove_non_alphanumeric(title);
+			// Search the lyrics
+			pfc::string8_fast url("http://search.azlyrics.com/search.php?q=");
 
 			url += fetcher.quote(artist);
-			url += "/";
+			url += "+";
 			url += fetcher.quote(title);
-			url += ".html";
+
+			// Get it now
+			try
+			{
+				fetcher.fetch(url, buff);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
+			}
+
+			int resultStart = buff.find_first("<b>1.</b>");
+			int startUrl = buff.find_first("<a href=\"", resultStart) + 9;
+			int endUrl = buff.find_first("\"", startUrl);
+
+			url = pfc::string8_fast(buff.get_ptr()+startUrl, endUrl - startUrl);
 
 			// Get it now
 			try
