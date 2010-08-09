@@ -41,7 +41,7 @@ cmdline_handler::result cmdline_handler::on_token(const char * token)
 	// Configuration window
 	else if (strncmp(token, conf_prefix, _countof(conf_prefix) - 1) == 0)
 	{
-		contextmenu_leaf_conf::g_show_conf_win();
+		//contextmenu_leaf_conf::g_show_conf_win();
 
 		return RESULT_PROCESSED;
 	}

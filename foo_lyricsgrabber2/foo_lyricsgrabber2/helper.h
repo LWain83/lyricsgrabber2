@@ -64,6 +64,11 @@ public:
 	static void convert_to_lower_case(pfc::string_base& p_source);
 	static void remove_char(pfc::string_base& p_source, const char p_remove);
 	static void remove_non_alphanumeric(pfc::string_base& p_source);
+	static void remove_non_alphanumeric_keep_space(pfc::string_base& p_source);
+	static pfc::string_list_impl * split_lines(const pfc::string_base& p_source);
+	static void remove_end_linebreaks(pfc::string8& p_source);
+	static void remove_beginning_linebreaks(pfc::string8& p_source);
+	static void remove_end(pfc::string8& p_source, const char toRemove);
 
 private:
 	string_helper() {};

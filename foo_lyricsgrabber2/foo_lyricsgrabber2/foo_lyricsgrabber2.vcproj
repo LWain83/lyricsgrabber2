@@ -264,10 +264,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ui_main_conf.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ui_main_conf_pref.cpp"
 				>
 			</File>
@@ -334,10 +330,6 @@
 			</File>
 			<File
 				RelativePath=".\task.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ui_main_conf.h"
 				>
 			</File>
 			<File

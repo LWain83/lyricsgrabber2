@@ -7,11 +7,10 @@
 #include "debug.h"
 
 static contextmenu_group_popup_factory g_contextmenu(lyrics_grabber_contextmenu::class_guid, contextmenu_groups::root, "Lyrics Grabber", 0);
-CMainConf * contextmenu_leaf_conf::g_conf_dlg = NULL;
 
 unsigned lyrics_grabber_contextmenu::get_num_items()
 {
-	unsigned count = 1;
+	unsigned count = 0;
 	const grabber::provider_ptr_list list = host_impl::g_get_provider_list();
 
 	for (t_size i = 0; i < list.get_count(); i++)
@@ -38,11 +37,6 @@ contextmenu_item_node_root * lyrics_grabber_contextmenu::instantiate_item(unsign
 			// Create normal command menu item
 			return new contextmenu_leaf(ptr, p_index);
 		}
-	}
-	else
-	{
-		// Configuration
-		return new contextmenu_leaf_conf;
 	}
 }
 
@@ -85,11 +79,6 @@ void lyrics_grabber_contextmenu::get_item_name(unsigned p_index,pfc::string_base
 			ptr->get_menu_item_name(p_index - i, p_out);
 		}
 	}
-	else
-	{
-		// Configuration
-		contextmenu_leaf_conf::g_get_name(p_out);
-	}
 }
 
 bool lyrics_grabber_contextmenu::get_item_description(unsigned p_index,pfc::string_base & p_out)
@@ -109,11 +98,6 @@ bool lyrics_grabber_contextmenu::get_item_description(unsigned p_index,pfc::stri
 			ptr->get_menu_item_description(p_index - i, p_out);
 		}
 	}
-	else
-	{
-		// Configuration
-		contextmenu_leaf_conf::g_get_name(p_out);
-	}
 
 	return true;
 }
@@ -131,11 +115,6 @@ void lyrics_grabber_contextmenu::item_execute_simple(unsigned p_index,const GUID
 		{
 			// Start new query
 			g_new_lookup(ptr, p_index - i, p_data);
-		}
-		else
-		{
-			// Configuration
-			contextmenu_leaf_conf::g_show_conf_win();
 		}
 	}
 	else
@@ -194,34 +173,6 @@ void lyrics_grabber_contextmenu::g_new_lookup(const grabber::provider_ptr p_prov
 {
 	service_ptr_t<lyric_lookup_task> task = new service_impl_t<lyric_lookup_task>(p_provider, p_index, p_data);
 	task->start();
-}
-
-void contextmenu_leaf_conf::g_show_conf_win()
-{
-	if (!g_conf_dlg || !g_conf_dlg->IsWindow())
-	{
-		g_conf_dlg = new CMainConf;
-		g_conf_dlg->Create(core_api::get_main_window());
-	}
-
-	g_conf_dlg->CenterWindow(core_api::get_main_window());
-	g_conf_dlg->ShowWindow(SW_SHOW);
-}
-
-bool contextmenu_leaf_conf::get_display_data(pfc::string_base & p_out,unsigned & p_displayflags,metadb_handle_list_cref p_data,const GUID & p_caller)
-{
-	g_get_name(p_out);
-
-	if (g_conf_dlg && g_conf_dlg->IsWindow())
-	{
-		p_displayflags = FLAG_GRAYED;
-	}
-	else
-	{
-		p_displayflags = 0;
-	}
-
-	return true;
 }
 
 bool contextmenu_leaf_look::get_display_data(pfc::string_base & p_out,unsigned & p_displayflags,metadb_handle_list_cref p_data,const GUID & p_caller)
