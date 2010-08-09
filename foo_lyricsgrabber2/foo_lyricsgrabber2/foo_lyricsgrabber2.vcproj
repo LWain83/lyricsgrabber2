@@ -106,6 +106,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="true"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -140,7 +141,7 @@
 				AdditionalIncludeDirectories="../"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;CURL_STATICLIB"
 				StringPooling="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				FloatingPointModel="2"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
@@ -164,6 +165,7 @@
 				AdditionalDependencies="Ws2_32.lib WinMM.lib shared.lib curllib.lib wldap32.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../shared;../../libs"
+				IgnoreDefaultLibraryNames="libcmt.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -266,6 +268,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ui_main_conf_pref.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ui_tagger.cpp"
 				>
 			</File>
@@ -332,6 +338,10 @@
 			</File>
 			<File
 				RelativePath=".\ui_main_conf.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ui_main_conf_pref.h"
 				>
 			</File>
 			<File
