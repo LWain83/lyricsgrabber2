@@ -54,8 +54,6 @@ void py_site::init()
 		s << ";" << m_config_info.extra_libpath.c_str();
 	}
 
-	console::print(s);
-
 	PySys_SetPath((char *)string_ansi_from_utf8(s).get_ptr());
 
 	// Create profile path if they are not exists

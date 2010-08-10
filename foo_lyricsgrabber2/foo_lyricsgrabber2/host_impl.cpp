@@ -114,6 +114,8 @@ void host_impl::g_load_providers()
 		ptr->set_config(file_io.get_ptr(), size, abort);
 	} while (e.next(ptr));
 
+	host_impl::g_get_provider_list().sort();
+
 	m_inited = true;
 }
 

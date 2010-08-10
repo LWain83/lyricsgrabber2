@@ -29,6 +29,7 @@ namespace lyrics_grabber_sdk
 		virtual void get_menu_item_name(unsigned p_index, pfc::string_base & p_out) = 0;
 		virtual bool get_menu_item_description(unsigned p_index, pfc::string_base & p_out) { p_out = ""; return false; }
 
+
 		// Querying for lyrics (execute command)
 		// Return value should allocated in this function, and freed in on_done
 		// Could return NULL so pointer_delete() would not be called

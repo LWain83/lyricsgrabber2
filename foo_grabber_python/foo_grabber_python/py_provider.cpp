@@ -26,7 +26,7 @@ bool py_provider::get_provider_description(pfc::string_base & p_out)
 
 bool py_provider::get_provider_url(pfc::string_base & p_out)
 {
-	p_out = "http://lyricsgrabber.googlecode.com/";
+	p_out = "http://code.google.com/p/lyricsgrabber2/";
 	return true;
 }
 
