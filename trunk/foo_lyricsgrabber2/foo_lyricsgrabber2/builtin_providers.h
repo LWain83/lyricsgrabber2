@@ -46,49 +46,6 @@ private:
 	grabber::config_item m_config_item;
 };
 
-
-class provider_lyricsplugin : public grabber::provider_base
-{
-public:
-	void get_provider_name(pfc::string_base & p_out) { p_out = "LyricsPlugin"; }
-	bool get_provider_description(pfc::string_base & p_out)
-	{ 
-		p_out = "LyricsPlugin.com is a great site providing a good many high quality lyrics for all genres.";
-		return true; 
-	}
-	GUID get_provider_guid()
-	{
-		// {D261C737-9297-4751-84CF-2F157B3FCAA2}
-		static const GUID provider_guid = 
-		{ 0xd261c737, 0x9297, 0x4751, { 0x84, 0xcf, 0x2f, 0x15, 0x7b, 0x3f, 0xca, 0xa2 } };
-
-		return provider_guid;
-	}
-	bool get_provider_url(pfc::string_base & p_out)
-	{
-		p_out = "http://lyricsplugin.com";
-		return true;
-	}
-
-	unsigned get_menu_item_count() { return 1; }
-	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
-	{
-		p_out = "Lyrics Plugin";
-	}
-
-	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
-	pfc::string8 lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort);
-	void pointer_delete(void * p) { delete p; }
-
-	void set_config(stream_reader * p_reader, t_size p_size, abort_callback & p_abort)
-	{
-		m_config_item = static_api_ptr_t<grabber::host>()->get_global_config();
-	}
-
-private:
-	grabber::config_item m_config_item;
-};
-
 class provider_darklyrics : public grabber::provider_base
 {
 public:
@@ -216,4 +173,48 @@ public:
 private:
 	grabber::config_item m_config_item;
 };
+
+class provider_lyricsplugin : public grabber::provider_base
+{
+public:
+	void get_provider_name(pfc::string_base & p_out) { p_out = "LyricsPlugin"; }
+	bool get_provider_description(pfc::string_base & p_out)
+	{ 
+		p_out = "LyricsPlugin.com is a great site providing a good many high quality lyrics for all genres.";
+		return true; 
+	}
+	GUID get_provider_guid()
+	{
+		// {D261C737-9297-4751-84CF-2F157B3FCAA2}
+		static const GUID provider_guid = 
+		{ 0xd261c737, 0x9297, 0x4751, { 0x84, 0xcf, 0x2f, 0x15, 0x7b, 0x3f, 0xca, 0xa2 } };
+
+		return provider_guid;
+	}
+	bool get_provider_url(pfc::string_base & p_out)
+	{
+		p_out = "http://lyricsplugin.com";
+		return true;
+	}
+
+	unsigned get_menu_item_count() { return 1; }
+	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
+	{
+		p_out = "Lyrics Plugin";
+	}
+
+	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	pfc::string8 lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	void pointer_delete(void * p) { delete p; }
+
+	void set_config(stream_reader * p_reader, t_size p_size, abort_callback & p_abort)
+	{
+		m_config_item = static_api_ptr_t<grabber::host>()->get_global_config();
+	}
+
+private:
+	grabber::config_item m_config_item;
+};
+
+
 #endif

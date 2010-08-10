@@ -377,7 +377,7 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 //************************************************************************
 pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
-	const float threshold = 0.8f;
+	const float threshold = 0.7f;
 
 	// Regular Expression Class
 	CRegexpT<char> regexp;
@@ -506,6 +506,12 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 
 					temp = pfc::string8_fast(buff.get_ptr()+gStart, gEnd - gStart);
 
+					if (temp.find_first(title) != -1)
+					{
+						jump_to = no;
+						break;
+					}
+
 					int levDist = LD(compare, compare.get_length(), temp, temp.get_length());
 
 					good = 1.0f - (levDist / (float)compare.get_length());
@@ -515,6 +521,7 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 						jump_to = no;
 						best = good;
 					}
+
 					result = regexp.Match(buff.get_ptr(),result.GetEnd());
 				}
 

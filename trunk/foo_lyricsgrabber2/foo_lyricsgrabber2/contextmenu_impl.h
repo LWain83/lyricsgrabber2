@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ui_main_conf.h"
-
 
 class lyrics_grabber_contextmenu : public contextmenu_item_v2
 {

@@ -11,11 +11,10 @@ public:
 	}
 
 	//! Provider basics
-	void get_provider_name(pfc::string_base & p_out) { p_out = "Python"; };
+	void get_provider_name(pfc::string_base & p_out) { p_out = "Scripts"; };
 	GUID get_provider_guid();
 	bool get_provider_description(pfc::string_base & p_out);
 	bool get_provider_url(pfc::string_base & p_out);
-
 	// Context menu items
 	bool is_menu_popup() { return true; }
 	unsigned get_menu_item_count();
