@@ -82,11 +82,11 @@ pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_hand
 
 				list[j]->get_provider_name(provider);
 
-				if (provider.find_first("Python") == -1)
+				if (provider.find_first("Scripts") == -1)
 				{
 					buffer = list[j]->lookup_one(j, p, p_status, p_abort);
 					
-					if (buffer != "")
+					if (buffer.get_length() != 0)
 						break;
 				}
 			}	
