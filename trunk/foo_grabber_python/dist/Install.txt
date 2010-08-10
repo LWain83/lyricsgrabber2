@@ -5,7 +5,7 @@
   (1)Make sure you have foo_lyricsgrabber2 installed already
   (2)Put python25.dll into foobar2000\ directory
   (3)Put foo_grabber_python.dll and foo_lyricsgrabber2.dll into foobar2000\components\ directory
-  (4)Copy pygrabber directory and all its contents to foobar2000\ directory
+  (4)Copy pygrabber directory and all its contents to %appdata%\foobar2000\ directory
 
   foo_grabber_python will create and pygrabber/libs in your foobar2000 profile folder at startup.
 
