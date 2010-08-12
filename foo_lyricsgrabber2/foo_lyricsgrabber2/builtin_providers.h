@@ -174,6 +174,48 @@ private:
 	grabber::config_item m_config_item;
 };
 
+class provider_lyricwiki : public grabber::provider_base
+{
+public:
+	void get_provider_name(pfc::string_base & p_out) { p_out = "LyricWiki"; }
+	bool get_provider_description(pfc::string_base & p_out)
+	{ 
+		p_out = "LyricWiki is a free wiki websize where anyone can get reliable lyrics for any song by any artist.";
+		return true; 
+	}
+	GUID get_provider_guid()
+	{
+		// {72E6B3AE-1494-401E-861C-AD2ABE37E0DD}
+		static const GUID provider_guid = 
+		{ 0x72E6B3AE, 0x1494, 0x401E, { 0x86, 0x1C, 0xAD, 0x2A, 0xBE, 0x37, 0xE0, 0xDD } };
+
+		return provider_guid;
+	}
+	bool get_provider_url(pfc::string_base & p_out)
+	{
+		p_out = "http://lyrics.wikia.com";
+		return true;
+	}
+
+	unsigned get_menu_item_count() { return 1; }
+	void get_menu_item_name(unsigned p_index, pfc::string_base & p_out)
+	{
+		p_out = "LyricWiki";
+	}
+
+	pfc::string_list_impl * lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	pfc::string8 lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort);
+	void pointer_delete(void * p) { delete p; }
+
+	void set_config(stream_reader * p_reader, t_size p_size, abort_callback & p_abort)
+	{
+		m_config_item = static_api_ptr_t<grabber::host>()->get_global_config();
+	}
+
+private:
+	grabber::config_item m_config_item;
+};
+
 class provider_lyricsplugin : public grabber::provider_base
 {
 public:
