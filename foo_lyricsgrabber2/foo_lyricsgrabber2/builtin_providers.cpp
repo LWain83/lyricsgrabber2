@@ -33,6 +33,9 @@ FORCEINLINE void how_to_sleep(t_size p_items)
 	}
 }
 
+//************************************************************************
+//*                              Search All                              *
+//************************************************************************
 pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
 	pfc::string_list_impl * str_list = new pfc::string_list_impl;
@@ -1051,6 +1054,7 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 //************************************************************************
 pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	const float threshold = 0.75;
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -1113,8 +1117,8 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 				// Get Artist
 				artist = info.meta_get("artist", j);
 
-				string_helper::remove_non_alphanumeric_keep_space(artist);
-				string_helper::remove_non_alphanumeric_keep_space(title);
+				//string_helper::remove_non_alphanumeric_keep_space(artist);
+				//string_helper::remove_non_alphanumeric_keep_space(title);
 
 				//Fetching from HTTP
 				// Set HTTP Address
@@ -1157,13 +1161,18 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 				{
 					unsigned d;
 					line = lines->get_item(li);
+					
 					id = pfc::string8_fast(line.get_ptr(), line.find_first('\\'));
 					ti = pfc::string8_fast(line.get_ptr() + line.find_first('\\') +1, line.find_last('\\') - line.find_first('\\')- 1);
 					ar = pfc::string8_fast(line.get_ptr() + line.find_last('\\')+1, line.get_length() - line.find_last('\\') - 1 );
 
 					d = LD(artist, artist.get_length(), ar, ar.get_length()) + LD(title, title.get_length(), ti, ti.get_length());
 
-					if (d < m)
+					int levDist = LD(title, title.get_length(), ti, ti.get_length());
+
+					float good = 1.0f - ((float)levDist / title.get_length());
+					
+					if (d < m && good > threshold)
 					{
 						m = d;
 						best = id;
@@ -1516,8 +1525,6 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 }
 pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
-	const float threshold = 0.8f;
-
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
