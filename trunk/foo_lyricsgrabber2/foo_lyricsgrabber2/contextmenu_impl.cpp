@@ -10,6 +10,9 @@ static contextmenu_group_popup_factory g_contextmenu(lyrics_grabber_contextmenu:
 unsigned lyrics_grabber_contextmenu::get_num_items()
 {
 	unsigned count = 0;
+
+	host_impl::g_get_provider_list().sort();
+	
 	const grabber::provider_ptr_list list = host_impl::g_get_provider_list();
 
 	for (t_size i = 0; i < list.get_count(); i++)

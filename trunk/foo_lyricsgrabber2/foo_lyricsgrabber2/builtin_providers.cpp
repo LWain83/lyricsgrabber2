@@ -15,6 +15,7 @@ static grabber::provider_factory<provider_searchall> g_searchall;
 static grabber::provider_factory<provider_darklyrics> g_darklyrics;
 static grabber::provider_factory<provider_azlyrics> g_azlyrics;
 static grabber::provider_factory<provider_lyrdb> g_lyrdb;
+static grabber::provider_factory<provider_lyricwiki> g_lyricwiki;
 
 FORCEINLINE void how_to_sleep(t_size p_items)
 {
@@ -429,13 +430,22 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 			p->get_info(info);
 
 			// Get count of artists
-			t_size count = info.meta_get_count_by_name("artist");
+			t_size count = info.meta_get_count_by_name("album");
 
+			if (count == 0)
+				continue;
 			// Get Album
 			album = info.meta_get("album", 0);
 
+			count = info.meta_get_count_by_name("title");
+
+			if (count == 0)
+				continue;
+
 			// Get TITLE
 			title = info.meta_get("title", 0);
+
+			count = info.meta_get_count_by_name("artist");
 
 			bool found = false;
 
@@ -613,14 +623,22 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 		p->get_info(info);
 
 		// Get count of artists
-		t_size count = info.meta_get_count_by_name("artist");
+		t_size count = info.meta_get_count_by_name("album");
 
+		if (count == 0)
+			return "";
 		// Get Album
 		album = info.meta_get("album", 0);
+
+		count = info.meta_get_count_by_name("title");
+
+		if (count == 0)
+			return "";
 
 		// Get TITLE
 		title = info.meta_get("title", 0);
 
+		count = info.meta_get_count_by_name("artist");
 
 		// Iterate through all artists listed
 		for (int j = 0; j < count; j++)
@@ -744,9 +762,6 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 
 	return "";
 }
-
-
-
 
 //************************************************************************
 //*                              AZ Lyrics                               *
@@ -1108,9 +1123,9 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 				//URL = http://webservices.lyrdb.com/lookup.php?q=query&for=field&agent=agent
 
 				url += fetcher.quote(artist);
-				url += "|";
+				url += "%20";
 				url += fetcher.quote(title);
-				url += "&for=match&agent=LyricsGrabber2";
+				url += "&for=fullt&agent=LyricsGrabber2";
 
 				// Get it now
 				try
@@ -1214,8 +1229,6 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 }
 pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
-	const float threshold = 0.8f;
-
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -1253,9 +1266,6 @@ pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_pt
 			// Get Artist
 			artist = info.meta_get("artist", j);
 
-			string_helper::remove_non_alphanumeric_keep_space(artist);
-			string_helper::remove_non_alphanumeric_keep_space(title);
-
 			//Fetching from HTTP
 			// Set HTTP Address
 			pfc::string8_fast url("http://webservices.lyrdb.com/lookup.php?q=");
@@ -1263,9 +1273,9 @@ pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_pt
 			//URL = http://webservices.lyrdb.com/lookup.php?q=query&for=field&agent=agent
 
 			url += fetcher.quote(artist);
-			url += "|";
+			url += "%20";
 			url += fetcher.quote(title);
-			url += "&for=match&agent=LyricsGrabber2";
+			url += "&for=fullt&agent=LyricsGrabber2";
 
 			// Get it now
 			try
@@ -1342,6 +1352,260 @@ pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_pt
 				string_helper::remove_end(buff, ' ');
 
 				return buff;
+			}
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		return "";
+	}
+	catch (...)
+	{
+		return "";
+	}
+
+	return "";
+}
+
+
+//************************************************************************
+//*                              LyricWiki                               *
+//************************************************************************
+pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+	pfc::string_list_impl * str_list = new pfc::string_list_impl;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		for (t_size i = 0; i < p_meta.get_count(); ++i)
+		{
+			if (p_abort.is_aborting())
+				break;
+
+			// Sleep
+			how_to_sleep(i);
+			// Clear buff
+			buff.reset();
+
+			const metadb_handle_ptr & p = p_meta.get_item(i);
+
+			if (p.is_empty())
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+			// Set progress
+			pfc::string8_fast path = file_path_canonical(p->get_path());
+
+			// add subsong index?
+			if (p->get_subsong_index() > 0)
+			{
+				path.add_string(" /index:");
+				path.add_string(pfc::format_uint(p->get_subsong_index()));
+			}
+
+			p_status.set_item_path(path);
+			p_status.set_progress(i + 1, p_meta.get_count());
+
+			pfc::string8_fast artist, title;
+
+			file_info_impl info;
+			p->get_info(info);
+
+			// Get count of artists
+			t_size count = info.meta_get_count_by_name("artist");
+
+			// Get TITLE
+			title = info.meta_get("title", 0);
+
+			bool found = false;
+
+			// Iterate through all artists listed
+			for (int j = 0; j < count && !found; j++)
+			{
+				// Get Artist
+				artist = info.meta_get("artist", j);
+
+				artist.replace_char(' ', '_');
+				title.replace_char(' ', '_');
+
+				//Fetching from HTTP
+				// Set HTTP Address
+				pfc::string8_fast url("http://lyrics.wikia.com/index.php?title=");
+
+				//URL = http://lyrics.wikia.com/index.php?title=Blackmore%27s_Night:I_Guess_It_Doesn%27t_Matter_Anymore&action=edit
+
+				url += fetcher.quote(artist);
+				url += ":";
+				url += fetcher.quote(title);
+				url += "&action=edit";
+
+				// Get it now
+				try
+				{
+					fetcher.fetch(url, buff);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
+
+				const char * regex_lyrics = "&lt;lyrics&gt;\\s(?P<lyrics>.*?)\\s&lt;/lyrics";
+
+				// expression for extract lyrics
+				regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
+
+				int noGroup = regexp.GetNamedGroupNumber("lyrics");
+
+				MatchResult result = regexp.Match(buff.get_ptr());
+
+				if (result.IsMatched())
+				{
+					int nStart = result.GetGroupStart(noGroup);
+					int nEnd = result.GetGroupEnd(noGroup);
+
+					pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+
+					if (lyric.get_length() > 0)
+					{
+						found = true;
+
+						string_helper::remove_beginning_linebreaks(lyric);
+						string_helper::remove_end_linebreaks(lyric);
+
+						str_list->add_item(lyric);
+						continue;
+					}
+				}
+			}
+			if (found)
+				continue;
+			else
+				str_list->add_item("");
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		delete str_list;
+		return NULL;
+	}
+	catch (...)
+	{
+		delete str_list;
+		return NULL;
+	}
+
+	return str_list;
+}
+pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	const float threshold = 0.8f;
+
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		const metadb_handle_ptr & p = p_meta;
+
+		if (p.is_empty())
+		{
+			return "";
+		}
+
+		pfc::string8_fast artist, title, album;
+		static_api_ptr_t<titleformat_compiler> compiler;
+		service_ptr_t<titleformat_object> script;
+
+		file_info_impl info;
+		p->get_info(info);
+
+		// Get count of artists
+		t_size count = info.meta_get_count_by_name("artist");
+
+		// Get TITLE
+		title = info.meta_get("title", 0);
+
+		// Iterate through all artists listed
+		for (int j = 0; j < count; j++)
+		{
+			// Get Artist
+			artist = info.meta_get("artist", j);
+
+			artist.replace_char(' ', '_');
+			title.replace_char(' ', '_');
+
+			//Fetching from HTTP
+			// Set HTTP Address
+			pfc::string8_fast url("http://lyrics.wikia.com/index.php?title=");
+
+			//URL = http://lyrics.wikia.com/index.php?title=Blackmore%27s_Night:I_Guess_It_Doesn%27t_Matter_Anymore&action=edit
+
+			url += fetcher.quote(artist);
+			url += ":";
+			url += fetcher.quote(title);
+			url += "&action=edit";
+
+
+			// Get it now
+			try
+			{
+				fetcher.fetch(url, buff);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
+			}
+			const char * regex_lyrics = "&lt;lyrics&gt;\\s(?P<lyrics>.*?)\\s&lt;/lyrics";
+
+			// expression for extract lyrics
+			regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
+
+			int noGroup = regexp.GetNamedGroupNumber("lyrics");
+
+			MatchResult result = regexp.Match(buff.get_ptr());
+
+			if (result.IsMatched())
+			{
+				int nStart = result.GetGroupStart(noGroup);
+				int nEnd = result.GetGroupEnd(noGroup);
+
+				pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+				if (lyric.get_length() > 0)
+				{
+					string_helper::remove_beginning_linebreaks(lyric);
+					string_helper::remove_end_linebreaks(lyric);
+					return lyric;
+				}
 			}
 		}
 	}
