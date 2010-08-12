@@ -1238,6 +1238,7 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 }
 pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	const float threshold = 0.75;
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -1322,7 +1323,11 @@ pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_pt
 
 				d = LD(artist, artist.get_length(), ar, ar.get_length()) + LD(title, title.get_length(), ti, ti.get_length());
 
-				if (d < m)
+				int levDist = LD(title, title.get_length(), ti, ti.get_length());
+
+				float good = 1.0f - ((float)levDist / title.get_length());
+
+				if (d < m && good > threshold)
 				{
 					m = d;
 					best = id;
@@ -1435,7 +1440,11 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 			t_size count = info.meta_get_count_by_name("artist");
 
 			// Get TITLE
-			title = info.meta_get("title", 0);
+			static_api_ptr_t<titleformat_compiler> compiler;
+			service_ptr_t<titleformat_object> script;
+	
+			compiler->compile_safe(script, "$replace($caps2(%title%),' ','_')");
+			p->format_title(NULL, title, script, NULL);
 
 			bool found = false;
 
@@ -1446,7 +1455,6 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 				artist = info.meta_get("artist", j);
 
 				artist.replace_char(' ', '_');
-				title.replace_char(' ', '_');
 
 				//Fetching from HTTP
 				// Set HTTP Address
@@ -1544,8 +1552,6 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 		}
 
 		pfc::string8_fast artist, title, album;
-		static_api_ptr_t<titleformat_compiler> compiler;
-		service_ptr_t<titleformat_object> script;
 
 		file_info_impl info;
 		p->get_info(info);
@@ -1554,7 +1560,11 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 		t_size count = info.meta_get_count_by_name("artist");
 
 		// Get TITLE
-		title = info.meta_get("title", 0);
+		static_api_ptr_t<titleformat_compiler> compiler;
+		service_ptr_t<titleformat_object> script;
+
+		compiler->compile_safe(script, "$replace($caps2(%title%),' ','_')");
+		p->format_title(NULL, title, script, NULL);
 
 		// Iterate through all artists listed
 		for (int j = 0; j < count; j++)
@@ -1563,7 +1573,6 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 			artist = info.meta_get("artist", j);
 
 			artist.replace_char(' ', '_');
-			title.replace_char(' ', '_');
 
 			//Fetching from HTTP
 			// Set HTTP Address
