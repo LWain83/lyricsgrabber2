@@ -381,7 +381,9 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 //************************************************************************
 pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
-	const float threshold = 0.7f;
+	const float threshold = 0.8f;
+
+	const pfc::string8 site = "darklyrics.com";
 
 	// Regular Expression Class
 	CRegexpT<char> regexp;
@@ -427,7 +429,7 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 			p_status.set_item_path(path);
 			p_status.set_progress(i + 1, p_meta.get_count());
 
-			pfc::string8_fast artist, title, album;
+			pfc::string8_fast artist, title, album, keywords;
 
 			file_info_impl info;
 			p->get_info(info);
@@ -457,26 +459,17 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 			{
 				// Get Artist
 				artist = info.meta_get("artist", j);
-			
-				//Fetching from HTTP
-				// Set HTTP Address
-				pfc::string8_fast url("http://www.darklyrics.com/lyrics/");
 
-				// URL = http://www.darklyrics.com/lyrics/ensiferum/victorysongs.html
-
-				string_helper::convert_to_lower_case(artist);
-				string_helper::convert_to_lower_case(album);
-				string_helper::remove_char(album, ' ');
-
-				url += fetcher.quote(artist);
-				url += "/";
-				url += fetcher.quote(album);
-				url += ".html";
+				keywords = artist;
+				keywords += "+";
+				keywords = album;
+				keywords += "+";
+				keywords = title;
 
 				// Get it now
 				try
 				{
-					fetcher.fetch(url, buff);
+					fetcher.fetch_googleluck(site, keywords, buff);
 				}
 				catch (pfc::exception & e)
 				{
@@ -487,7 +480,6 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 				{
 					continue;
 				}
-
 
 				const char * regex_ahref = "<a\\shref=\"#(?P<no>\\d+)\">(?P<text>.+?)</a>";
 
@@ -598,6 +590,8 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
 	const float threshold = 0.8f;
+	
+	const pfc::string8 site = "darklyrics.com";
 
 	// Regular Expression Class
 	CRegexpT<char> regexp;
@@ -618,9 +612,7 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 			return "";
 		}
 
-		pfc::string8_fast artist, title, album;
-		static_api_ptr_t<titleformat_compiler> compiler;
-		service_ptr_t<titleformat_object> script;
+		pfc::string8_fast artist, title, album, keywords;
 
 		file_info_impl info;
 		p->get_info(info);
@@ -649,24 +641,17 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 			// Get Artist
 			artist = info.meta_get("artist", j);		//Fetching from HTTP
 
-			// Set HTTP Address
-			pfc::string8_fast url("http://www.darklyrics.com/lyrics/");
 
-			// URL = http://www.darklyrics.com/lyrics/ensiferum/victorysongs.html
-
-			string_helper::convert_to_lower_case(artist);
-			string_helper::convert_to_lower_case(album);
-			string_helper::remove_char(album, ' ');
-
-			url += fetcher.quote(artist);
-			url += "/";
-			url += fetcher.quote(album);
-			url += ".html";
+			keywords = artist;
+			keywords += "+";
+			keywords = album;
+			keywords += "+";
+			keywords = title;
 
 			// Get it now
 			try
 			{
-				fetcher.fetch(url, buff);
+				fetcher.fetch_googleluck(site, keywords, buff);
 			}
 			catch (pfc::exception & e)
 			{
@@ -1045,9 +1030,6 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 
 	return "";
 }
-
-
-
 
 //************************************************************************
 //*                                LyrDB                                 *
@@ -1465,7 +1447,6 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 				url += fetcher.quote(artist);
 				url += ":";
 				url += fetcher.quote(title);
-				url += "&action=edit";
 
 				// Get it now
 				try
@@ -1482,7 +1463,7 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 					continue;
 				}
 
-				const char * regex_lyrics = "&lt;lyrics&gt;\\s(?P<lyrics>.*?)\\s&lt;/lyrics";
+				const char * regex_lyrics = "'lyricbox'(.*?)</div>(?P<lyrics>.*?)<!--";
 
 				// expression for extract lyrics
 				regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
@@ -1498,6 +1479,7 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 
 					pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
+					convert_html_to_plain(lyric);
 
 					if (lyric.get_length() > 0)
 					{
@@ -1583,7 +1565,6 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 			url += fetcher.quote(artist);
 			url += ":";
 			url += fetcher.quote(title);
-			url += "&action=edit";
 
 
 			// Get it now
@@ -1600,7 +1581,8 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 			{
 				continue;
 			}
-			const char * regex_lyrics = "&lt;lyrics&gt;\\s(?P<lyrics>.*?)\\s&lt;/lyrics";
+
+			const char * regex_lyrics = "'lyricbox'(.*?)</div>(?P<lyrics>.*?)<!--";
 
 			// expression for extract lyrics
 			regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
@@ -1615,6 +1597,8 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 				int nEnd = result.GetGroupEnd(noGroup);
 
 				pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+				convert_html_to_plain(lyric);
 
 				if (lyric.get_length() > 0)
 				{
