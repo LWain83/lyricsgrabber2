@@ -152,3 +152,18 @@ void curl_wrapper_simple::fetch(const pfc::string_base & p_url,const pfc::string
 		m_buff.reset();
 	}
 }
+
+void curl_wrapper_simple::fetch_googleluck(const pfc::string_base & p_site, const pfc::string_base & p_keywords, pfc::string_base & p_out)
+{
+	CURLcode nCode;
+	
+	pfc::string8_fast url = "http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q=";
+	url += p_keywords;
+	url += "+";
+	url += p_site;
+	url += "&btnI=I%27m+Feeling+Lucky";
+
+	curl_easy_setopt(m_curl_handle, CURLOPT_FOLLOWLOCATION, 1);
+
+	fetch(url, url, p_out);
+}
