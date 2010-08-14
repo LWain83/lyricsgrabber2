@@ -756,6 +756,8 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 //************************************************************************
 pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	const float threshold = 0.8f;
+
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -861,19 +863,34 @@ pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handl
 					continue;
 				}
 
-				const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>(.*?)<br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
-			
+				const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>\"(?P<title>.*?)\"</b><br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
+
 				// expression for extract lyrics
 				regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
 
 				int noGroup = regexp.GetNamedGroupNumber("lyrics");
+				int noTitle = regexp.GetNamedGroupNumber("title");
+
 				// match
 				MatchResult result = regexp.Match(buff.get_ptr());
 
 				if (result.IsMatched())
 				{
-					int nStart = result.GetGroupStart(noGroup);
-					int nEnd = result.GetGroupEnd(noGroup);
+					int nStart = result.GetGroupStart(noTitle);
+					int nEnd = result.GetGroupEnd(noTitle);
+
+					pfc::string8_fast songTitle(buff.get_ptr() +nStart, nEnd - nStart);
+
+					int levDist = LD(title, title.get_length(), songTitle, songTitle.get_length());
+
+					float good = 1.0f - ((float)levDist / title.get_length());
+
+					if (good < threshold)
+						continue;
+
+					nStart = result.GetGroupStart(noGroup);
+					nEnd = result.GetGroupEnd(noGroup);
+
 					pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
 					convert_html_to_plain(lyric);
@@ -992,19 +1009,33 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 				continue;
 			}
 
-			const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>(.*?)<br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
+			const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>\"(?P<title>.*?)\"</b><br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
 
 			// expression for extract lyrics
 			regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
 
 			int noGroup = regexp.GetNamedGroupNumber("lyrics");
+			int noTitle = regexp.GetNamedGroupNumber("title");
 
 			MatchResult result = regexp.Match(buff.get_ptr());
 
 			if (result.IsMatched())
 			{
-				int nStart = result.GetGroupStart(noGroup);
-				int nEnd = result.GetGroupEnd(noGroup);
+				int nStart = result.GetGroupStart(noTitle);
+				int nEnd = result.GetGroupEnd(noTitle);
+
+				pfc::string8_fast songTitle(buff.get_ptr() +nStart, nEnd - nStart);
+
+				int levDist = LD(title, title.get_length(), songTitle, songTitle.get_length());
+
+				float good = 1.0f - ((float)levDist / title.get_length());
+
+				if (good < threshold)
+					return "";
+
+				nStart = result.GetGroupStart(noGroup);
+				nEnd = result.GetGroupEnd(noGroup);
+
 				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
 				convert_html_to_plain(lyric);
@@ -1036,7 +1067,7 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 //************************************************************************
 pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
-	const float threshold = 0.75;
+	const float threshold = 0.8;
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -1152,9 +1183,13 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 
 					int levDist = LD(title, title.get_length(), ti, ti.get_length());
 
-					float good = 1.0f - ((float)levDist / title.get_length());
+					float goodTi = 1.0f - ((float)levDist / title.get_length());
+
+					levDist = LD(artist, artist.get_length(), ar, ar.get_length());
+
+					float goodAr = 1.0f - ((float)levDist / artist.get_length());
 					
-					if (d < m && good > threshold)
+					if (d < m && goodTi >= threshold && goodAr >= threshold)
 					{
 						m = d;
 						best = id;
@@ -1220,7 +1255,7 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 }
 pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
-	const float threshold = 0.75;
+	const float threshold = 0.8;
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -1307,9 +1342,13 @@ pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_pt
 
 				int levDist = LD(title, title.get_length(), ti, ti.get_length());
 
-				float good = 1.0f - ((float)levDist / title.get_length());
+				float goodTi = 1.0f - ((float)levDist / title.get_length());
 
-				if (d < m && good > threshold)
+				levDist = LD(artist, artist.get_length(), ar, ar.get_length());
+
+				float goodAr = 1.0f - ((float)levDist / artist.get_length());
+
+				if (d < m && goodTi >= threshold && goodAr >= threshold)
 				{
 					m = d;
 					best = id;
