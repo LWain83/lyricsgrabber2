@@ -891,7 +891,7 @@ pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handl
 					nStart = result.GetGroupStart(noGroup);
 					nEnd = result.GetGroupEnd(noGroup);
 
-					pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+					pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
 					convert_html_to_plain(lyric);
 
@@ -1036,7 +1036,7 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 				nStart = result.GetGroupStart(noGroup);
 				nEnd = result.GetGroupEnd(noGroup);
 
-				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+				pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
 				convert_html_to_plain(lyric);
 
@@ -1521,6 +1521,8 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 
 					if (test.find_first("Instrumental") != -1)
 					{
+						found = true;
+
 						str_list->add_item("[Instrumental]");
 						continue;
 					}
