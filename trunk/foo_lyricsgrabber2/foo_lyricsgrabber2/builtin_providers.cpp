@@ -895,10 +895,10 @@ pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handl
 
 					convert_html_to_plain(lyric);
 
-					lyric.remove_chars(0,1);
-
-					if (string_trim(lyric).get_length() > 0)
+					if (lyric.get_length() > 0)
 					{
+						string_helper::remove_end_linebreaks(lyric);
+
 						str_list->add_item(lyric);
 						found = true;
 						continue;
@@ -1040,10 +1040,10 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 
 				convert_html_to_plain(lyric);
 
-				lyric.remove_chars(0, 1);
-
-				if (string_trim(lyric).get_length() > 0)
+				if (lyric.get_length() > 0)
 				{
+					string_helper::remove_end_linebreaks(lyric);
+
 					return lyric;
 				}
 			}
@@ -1502,19 +1502,31 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 					continue;
 				}
 
-				const char * regex_lyrics = "'lyricbox'(.*?)</div>(?P<lyrics>.*?)<!--";
+				const char * regex_lyrics = "'lyricbox'(?P<instrumental>.*?)</div>(?P<lyrics>.*?)<!--";
 
 				// expression for extract lyrics
 				regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
 
 				int noGroup = regexp.GetNamedGroupNumber("lyrics");
+				int instGroup = regexp.GetNamedGroupNumber("instrumental");
 
 				MatchResult result = regexp.Match(buff.get_ptr());
 
 				if (result.IsMatched())
 				{
-					int nStart = result.GetGroupStart(noGroup);
-					int nEnd = result.GetGroupEnd(noGroup);
+					int nStart = result.GetGroupStart(instGroup);
+					int nEnd = result.GetGroupEnd(instGroup);
+
+					pfc::string8_fast test(buff.get_ptr() + nStart, nEnd-nStart);
+
+					if (test.find_first("Instrumental") != -1)
+					{
+						str_list->add_item("[Instrumental]");
+						continue;
+					}
+
+					nStart = result.GetGroupStart(noGroup);
+					nEnd = result.GetGroupEnd(noGroup);
 
 					pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
@@ -1621,19 +1633,30 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 				continue;
 			}
 
-			const char * regex_lyrics = "'lyricbox'(.*?)</div>(?P<lyrics>.*?)<!--";
+			const char * regex_lyrics = "'lyricbox'(?P<instrumental>.*?)</div>(?P<lyrics>.*?)<!--";
 
 			// expression for extract lyrics
 			regexp.Compile(regex_lyrics, IGNORECASE | SINGLELINE);
 
 			int noGroup = regexp.GetNamedGroupNumber("lyrics");
+			int instGroup = regexp.GetNamedGroupNumber("instrumental");
 
 			MatchResult result = regexp.Match(buff.get_ptr());
 
 			if (result.IsMatched())
 			{
-				int nStart = result.GetGroupStart(noGroup);
-				int nEnd = result.GetGroupEnd(noGroup);
+				int nStart = result.GetGroupStart(instGroup);
+				int nEnd = result.GetGroupEnd(instGroup);
+
+				pfc::string8_fast test(buff.get_ptr() + nStart, nEnd-nStart);
+
+				if (test.find_first("Instrumental") != -1)
+				{
+					return "[Instrumental]";
+				}
+
+				nStart = result.GetGroupStart(noGroup);
+				nEnd = result.GetGroupEnd(noGroup);
 
 				pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
 
