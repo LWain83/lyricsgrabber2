@@ -462,9 +462,9 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 
 				keywords = artist;
 				keywords += "+";
-				keywords = album;
-				keywords += "+";
-				keywords = title;
+				keywords += album;
+				//keywords += "+";
+				//keywords += title;
 
 				// Get it now
 				try
@@ -484,7 +484,7 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 				const char * regex_ahref = "<a\\shref=\"#(?P<no>\\d+)\">(?P<text>.+?)</a>";
 
 				// expression for extract lyrics
-				regexp.Compile(regex_ahref, IGNORECASE);
+				regexp.Compile(regex_ahref, IGNORECASE | SINGLELINE);
 
 				// match
 				MatchResult result = regexp.Match(buff.get_ptr());
@@ -497,7 +497,6 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 				compare.insert_chars(0, ". ");
 				float good;
 				float best = 0.0f;
-
 
 				while (result.IsMatched())
 				{
