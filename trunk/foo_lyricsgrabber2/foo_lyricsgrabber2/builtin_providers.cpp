@@ -463,8 +463,8 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 				keywords = artist;
 				keywords += "+";
 				keywords += album;
-				//keywords += "+";
-				//keywords += title;
+
+				keywords.replace_char(' ', '+');
 
 				// Get it now
 				try
@@ -640,12 +640,11 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 			// Get Artist
 			artist = info.meta_get("artist", j);		//Fetching from HTTP
 
-
 			keywords = artist;
 			keywords += "+";
-			keywords = album;
-			keywords += "+";
-			keywords = title;
+			keywords += album;
+
+			keywords.replace_char(' ', '+');
 
 			// Get it now
 			try

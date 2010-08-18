@@ -26,7 +26,7 @@ tag_writter::tag_writter(metadb_handle_list_cref p_handles, const pfc::string_li
 	pfc::dynamic_assert(p_handles.get_count() == p_values.get_count());
 	pfc::array_t<t_size> order;
 
-	m_fieldname = host_impl::g_get_config_ref().lyric_filed_name;
+	m_fieldname = host_impl::g_get_config_ref().lyric_field_name;
 	order.set_size(p_handles.get_count());
 	order_helper::g_fill(order.get_ptr(), order.get_size());
 	p_handles.sort_get_permutation_t(pfc::compare_t<metadb_handle_ptr, metadb_handle_ptr>, order.get_ptr());
@@ -38,6 +38,7 @@ tag_writter::tag_writter(metadb_handle_list_cref p_handles, const pfc::string_li
 	for(t_size n = 0; n < order.get_count(); ++n) 
 	{
 		metadb_handle_ptr ptr = p_handles[order[n]];
+
 
 		if (has_skipped_items)
 		{
@@ -54,6 +55,11 @@ tag_writter::tag_writter(metadb_handle_list_cref p_handles, const pfc::string_li
 
 bool tag_writter::apply_filter(metadb_handle_ptr p_location,t_filestats p_stats,file_info & p_info)
 {
+	grabber::config_item & item = host_impl::g_get_config_ref();
+
+	static_api_ptr_t<titleformat_compiler> compiler;
+	service_ptr_t<titleformat_object> script;
+
 	t_size index;
 
 	if (m_handles.bsearch_t(pfc::compare_t<metadb_handle_ptr,metadb_handle_ptr>,p_location,index))
@@ -62,6 +68,14 @@ bool tag_writter::apply_filter(metadb_handle_ptr p_location,t_filestats p_stats,
 		if (!m_values[index] || !*m_values[index])
 			return false;
 		
+		if (item.title_formatting)
+		{
+			compiler->compile_safe(script, item.lyric_field_name);
+			m_handles[index]->format_title(NULL, m_fieldname, script, NULL);
+		}
+		else
+			m_fieldname = item.lyric_field_name;
+
 		p_info.meta_set(m_fieldname, m_values[index]);
 		return true;
 	}
