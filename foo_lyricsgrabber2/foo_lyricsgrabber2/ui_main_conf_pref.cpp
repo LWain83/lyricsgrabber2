@@ -30,7 +30,8 @@ void CMainConfPref::reset()
 	// Init data
 	// Lyric field name
 	grabber::config_item & conf = host_impl::g_get_config_ref();
-	uSetDlgItemText(m_hWnd, IDC_EDIT_LYRIC_FIELD_PREF, conf.lyric_filed_name);
+	uSetDlgItemText(m_hWnd, IDC_EDIT_LYRIC_FIELD_PREF, conf.lyric_field_name);
+	uSendDlgItemMessage(IDC_CHECK_TITLE_FORMATTING, BM_SETCHECK, conf.title_formatting ? BST_CHECKED : BST_UNCHECKED);
 	uSendDlgItemMessage(IDC_CHECK_SKIP_PRESENT_PREF, BM_SETCHECK, conf.skip_exist ? BST_CHECKED : BST_UNCHECKED);
 	uSendDlgItemMessage(IDC_CHECK_QUIET_PREF, BM_SETCHECK, conf.quiet_mode ? BST_CHECKED : BST_UNCHECKED);
 
@@ -106,7 +107,8 @@ bool CMainConfPref::HasChanged()
 
 	// Save Configuration
 	// Lyric Field Name
-	cfg.lyric_filed_name = tmp;
+	cfg.lyric_field_name = tmp;
+	cfg.title_formatting = uSendDlgItemMessage(IDC_CHECK_TITLE_FORMATTING, BM_GETCHECK) == BST_CHECKED;
 	cfg.skip_exist = uSendDlgItemMessage(IDC_CHECK_SKIP_PRESENT_PREF, BM_GETCHECK) == BST_CHECKED;
 	cfg.quiet_mode = uSendDlgItemMessage(IDC_CHECK_QUIET_PREF, BM_GETCHECK) == BST_CHECKED;
 
@@ -117,7 +119,8 @@ bool CMainConfPref::HasChanged()
 	cfg.proxy_type = m_combo_proxytype.GetCurSel();
 	cfg.proxy_need_auth = BST_CHECKED == uSendDlgItemMessage(IDC_CHECK_NEED_AUTH_PREF, BM_GETCHECK);
 
-	return cfg.lyric_filed_name != now.lyric_filed_name 
+	return cfg.lyric_field_name != now.lyric_field_name
+		   || cfg.title_formatting != now.title_formatting
 		   || cfg.skip_exist != now.skip_exist 
 		   || cfg.quiet_mode != now.quiet_mode 
 		   || cfg.proxy_type != now.proxy_type 
@@ -141,7 +144,8 @@ bool CMainConfPref::SaveConfiguration()
 	// Save Configuration
 	// Lyric Field Name
 	grabber::config_item & cfg = host_impl::g_get_config_ref();
-	cfg.lyric_filed_name = tmp;
+	cfg.lyric_field_name = tmp;
+	cfg.title_formatting = uSendDlgItemMessage(IDC_CHECK_TITLE_FORMATTING, BM_GETCHECK) == BST_CHECKED;
 	cfg.skip_exist = uSendDlgItemMessage(IDC_CHECK_SKIP_PRESENT_PREF, BM_GETCHECK) == BST_CHECKED;
 	cfg.quiet_mode = uSendDlgItemMessage(IDC_CHECK_QUIET_PREF, BM_GETCHECK) == BST_CHECKED;
 

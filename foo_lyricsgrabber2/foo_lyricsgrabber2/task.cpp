@@ -47,14 +47,24 @@ lyric_lookup_task::lyric_lookup_task(const grabber::provider_ptr & p_provider, u
 , m_values_ptr(NULL)
 {
 	grabber::config_item & item = host_impl::g_get_config_ref();
-
+	static_api_ptr_t<titleformat_compiler> compiler;
+	service_ptr_t<titleformat_object> script;
+	
 	if (item.skip_exist)
 	{
-		pfc::string8 & field_name = item.lyric_filed_name;
+		pfc::string8 field_name;
 
 		// Skip tracks which contains lyric
 		for (t_size i = 0; i < p_data.get_count(); i++)
 		{
+			if (item.title_formatting)
+			{
+				compiler->compile_safe(script, item.lyric_field_name);
+				p_data[i]->format_title(NULL, field_name, script, NULL);
+			}
+			else
+				field_name = item.lyric_field_name;
+
 			metadb_handle_ptr & ptr = p_data[i];
 			const file_info * pinfo;
 

@@ -20,6 +20,8 @@
 #define IDC_CHECK_NEED_AUTH_PREF        1031
 #define IDC_EDIT_PROXY_USERNAME_PREF    1032
 #define IDC_EDIT_PROXY_PASSWORD_PREF    1033
+#define IDC_CHECK1                      1034
+#define IDC_CHECK_TITLE_FORMATTING      1034
 #define ID_POPUP_SETTING                32775
 #define ID_POPUP_ABOUT                  32776
 #define ID_POPUP_WEBSITE                32777
@@ -30,7 +32,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        205
 #define _APS_NEXT_COMMAND_VALUE         32778
-#define _APS_NEXT_CONTROL_VALUE         1034
+#define _APS_NEXT_CONTROL_VALUE         1035
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
