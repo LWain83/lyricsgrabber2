@@ -557,6 +557,8 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 					{
 						string_helper::remove_beginning_linebreaks(lyric);
 						string_helper::remove_end_linebreaks(lyric);
+						string_helper::remove_beginning(lyric, ' ');
+						string_helper::remove_beginning(lyric, '\t');
 
 						console::print(lyric);
 
@@ -731,6 +733,8 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 				{
 					string_helper::remove_beginning_linebreaks(lyric);
 					string_helper::remove_end_linebreaks(lyric);
+					string_helper::remove_beginning(lyric, ' ');
+					string_helper::remove_beginning(lyric, '\t');
 					return lyric;
 				}
 			}
