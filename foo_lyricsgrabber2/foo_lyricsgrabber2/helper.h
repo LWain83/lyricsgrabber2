@@ -69,6 +69,7 @@ public:
 	static void remove_end_linebreaks(pfc::string8& p_source);
 	static void remove_beginning_linebreaks(pfc::string8& p_source);
 	static void remove_end(pfc::string8& p_source, const char toRemove);
+	static void remove_beginning(pfc::string8& p_source, const char toRemove);
 
 private:
 	string_helper() {};
