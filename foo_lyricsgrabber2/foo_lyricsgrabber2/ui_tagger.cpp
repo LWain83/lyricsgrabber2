@@ -95,7 +95,7 @@ BOOL CTaggerDialog::OnInitDialog(HWND wndFocus, LPARAM lInitParam)
 		}
 
 		status = (m_values[i] && *m_values[i]) ? status_success : status_failed;
-		lyrics = pfc::stringcvt::string_wide_from_utf8_fast(m_values[i].get_ptr());
+		//lyrics = pfc::stringcvt::string_wide_from_utf8(m_values[i].get_ptr());
 
 		m_files.AddItem(i, COL_ARTIST, artist.c_str());
 		m_files.AddItem(i, COL_TITLE, title.c_str());

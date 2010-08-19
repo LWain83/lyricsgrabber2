@@ -1204,6 +1204,10 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 				url = "http://webservices.lyrdb.com/getlyr.php?q=";
 				url += best;			
 
+				console::print(url);
+
+				buff.reset();
+
 				try
 				{
 					fetcher.fetch(url, buff);
@@ -1221,6 +1225,23 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 				if (buff.get_length() > 0)
 				{
 					found = true;
+
+					lines = string_helper::split_lines(buff);
+
+					buff.reset();
+
+					for (int x = 0; x < lines->get_count(); x++)
+					{
+						buff.add_string(lines->get_item(x));
+						buff.add_string("\r\n");
+					}
+
+					if (buff.is_valid_utf8() == false)
+					{
+						pfc::stringcvt::string_utf8_from_ansi temp(buff);
+
+						buff = temp;
+					}
 
 					string_helper::remove_beginning_linebreaks(buff);
 					string_helper::remove_end_linebreaks(buff);
