@@ -16,6 +16,7 @@ public:
 	pfc::string8_fast quote(const char * str) throw();
 	void fetch(const pfc::string_base & p_url, pfc::string_base & p_out);
 	void fetch(const pfc::string_base & p_url,const pfc::string_base & p_referer,  pfc::string_base & p_out);
+	void fetch_host(const pfc::string_base & p_host, const pfc::string_base & p_url, pfc::string_base & p_out, abort_callback & p_abort);
 	void fetch_googleluck(const pfc::string_base & p_site, const pfc::string_base & p_keywords, pfc::string_base & p_out);
 
 	static size_t g_write_memory_callback(void *ptr, size_t size, size_t nmemb, void *data) throw();

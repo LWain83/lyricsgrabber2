@@ -16,6 +16,7 @@ static grabber::provider_factory<provider_darklyrics> g_darklyrics;
 static grabber::provider_factory<provider_azlyrics> g_azlyrics;
 static grabber::provider_factory<provider_lyrdb> g_lyrdb;
 static grabber::provider_factory<provider_lyricwiki> g_lyricwiki;
+static grabber::provider_factory<provider_leoslyrics> g_leoslyrics;
 
 FORCEINLINE void how_to_sleep(t_size p_items)
 {
@@ -1707,6 +1708,355 @@ pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handl
 					string_helper::remove_beginning_linebreaks(lyric);
 					string_helper::remove_end_linebreaks(lyric);
 					return lyric;
+				}
+			}
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		return "";
+	}
+	catch (...)
+	{
+		return "";
+	}
+
+	return "";
+}
+
+
+//************************************************************************
+//*                           Leo's Lyrics                               *
+//************************************************************************
+pfc::string_list_impl * provider_leoslyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	TRACK_CALL_TEXT("provider_leoslyrics::lookup");
+
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+	pfc::string_list_impl * str_list = new pfc::string_list_impl;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		for (t_size i = 0; i < p_meta.get_count(); ++i)
+		{
+			if (p_abort.is_aborting())
+				break;
+
+			// Sleep
+			how_to_sleep(i);
+			// Clear buff
+			buff.reset();
+
+			const metadb_handle_ptr & p = p_meta.get_item(i);
+
+			if (p.is_empty())
+			{
+				str_list->add_item("");
+				continue;
+			}
+
+			// Set progress
+			pfc::string8_fast path = file_path_canonical(p->get_path());
+
+			// add subsong index?
+			if (p->get_subsong_index() > 0)
+			{
+				path.add_string(" /index:");
+				path.add_string(pfc::format_uint(p->get_subsong_index()));
+			}
+
+			p_status.set_item_path(path);
+			p_status.set_progress(i + 1, p_meta.get_count());
+
+			pfc::string8_fast artist, title;
+
+			file_info_impl info;
+			p->get_info(info);
+
+			// Get count of artists
+			t_size count = info.meta_get_count_by_name("artist");
+
+			// Get TITLE
+			static_api_ptr_t<titleformat_compiler> compiler;
+			service_ptr_t<titleformat_object> script;
+	
+			compiler->compile_safe(script, "%title%");
+			p->format_title(NULL, title, script, NULL);
+
+			bool found = false;
+
+			// Iterate through all artists listed
+			for (int j = 0; j < count && !found; j++)
+			{
+				// Get Artist
+				artist = info.meta_get("artist", j);
+
+
+				pfc::string8_fast url("http://77.79.210.222/api_search.php?auth=LeosLyrics5&artist=");
+				pfc::string8_fast host("api.leoslyrics.com");
+
+				//URL = http://77.79.210.222/api_search.php?auth=LeosLyrics5&artist=<artist>&songtitle=<title>
+
+				url += fetcher.quote(artist);
+				url += "&songtitle=";
+				url += fetcher.quote(title);
+
+				// Get it now
+				try
+				{
+					fetcher.fetch_host(host, url, buff, p_abort);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
+
+				const char * regex_hid = "code=\"(?P<code>.).*?hid=\"(?P<hid>.*?)\"";
+
+				// expression for extract lyrics
+				regexp.Compile(regex_hid, IGNORECASE | SINGLELINE);
+
+				pfc::string8_fast hid;
+
+				int codeGroup = regexp.GetNamedGroupNumber("code");
+				int hidGroup = regexp.GetNamedGroupNumber("hid");
+
+				MatchResult result = regexp.Match(buff.get_ptr());
+
+				if (result.IsMatched())
+				{
+					int nStart = result.GetGroupStart(codeGroup);
+					int nEnd = result.GetGroupEnd(codeGroup);
+
+					pfc::string8_fast code(buff.get_ptr() + nStart, nEnd-nStart);
+
+					if (code.find_first("0") == -1)
+						continue;
+
+					nStart = result.GetGroupStart(hidGroup);
+					nEnd = result.GetGroupEnd(hidGroup);
+
+					hid = pfc::string8_fast(buff.get_ptr() + nStart, nEnd - nStart);
+				
+					url = "http://77.79.210.222/api_search.php?auth=LeosLyrics5&hid=";
+					url += hid;
+
+					//URL = http://77.79.210.222/api_search.php?auth=LeosLyrics5&hid=<songID>
+
+					try
+					{
+						fetcher.fetch_host(host, url, buff, p_abort);
+					}
+					catch (pfc::exception & e)
+					{
+						console_error(e.what());
+						continue;
+					}
+					catch (...)
+					{
+						continue;
+					}
+
+					const char * regex_hid = "<text>\\s(?P<lyrics>.*?)\\s</text>";
+
+					// expression for extract lyrics
+					regexp.Compile(regex_hid, IGNORECASE | SINGLELINE);
+
+					int lyricsGroup = regexp.GetNamedGroupNumber("lyrics");
+
+					result = regexp.Match(buff.get_ptr());
+
+					if (result.IsMatched())
+					{
+						nStart = result.GetGroupStart(lyricsGroup);
+						nEnd = result.GetGroupEnd(lyricsGroup);
+
+						pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+						if (lyric.get_length() > 0)
+						{
+							found = true;
+
+							string_helper::remove_beginning_linebreaks(lyric);
+							string_helper::remove_end_linebreaks(lyric);
+
+							str_list->add_item(lyric);
+							continue;
+						}
+					}
+				}
+			}
+			if (found)
+				continue;
+			else
+				str_list->add_item("");
+		}
+	}
+	catch (pfc::exception & e)
+	{
+		console_error(e.what());
+		delete str_list;
+		return NULL;
+	}
+	catch (...)
+	{
+		delete str_list;
+		return NULL;
+	}
+
+	return str_list;
+}
+pfc::string8 provider_leoslyrics::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
+{
+	TRACK_CALL_TEXT("provider_leoslyrics::lookup_one");
+	// Regular Expression Class
+	CRegexpT<char> regexp;
+
+	// Buffer
+	pfc::string8 buff;
+
+	try
+	{
+		// Init fetcher
+		curl_wrapper_simple fetcher(&m_config_item);
+
+		const metadb_handle_ptr & p = p_meta;
+
+		if (p.is_empty())
+		{
+			return "";
+		}
+
+		pfc::string8_fast artist, title, album;
+
+		file_info_impl info;
+		p->get_info(info);
+
+		// Get count of artists
+		t_size count = info.meta_get_count_by_name("artist");
+
+		// Get TITLE
+		static_api_ptr_t<titleformat_compiler> compiler;
+		service_ptr_t<titleformat_object> script;
+
+		compiler->compile_safe(script, "%title%");
+		p->format_title(NULL, title, script, NULL);
+
+		// Iterate through all artists listed
+		for (int j = 0; j < count; j++)
+		{
+			// Get Artist
+			artist = info.meta_get("artist", j);
+
+			//Fetching from HTTP
+			// Set HTTP Address
+			pfc::string8_fast url("http://77.79.210.222/api_search.php?auth=LeosLyrics5&artist=");
+			pfc::string8_fast host("api.leoslyrics.com");
+
+			//URL = http://77.79.210.222/api_search.php?auth=LeosLyrics5&artist=<artist>&songtitle=<title>
+
+			url += fetcher.quote(artist);
+			url += "&songtitle=";
+			url += fetcher.quote(title);
+
+
+			// Get it now
+			try
+			{
+				fetcher.fetch_host(host, url, buff, p_abort);
+			}
+			catch (pfc::exception & e)
+			{
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
+			}
+
+			const char * regex_hid = "code=\"(?P<code>.).*?hid=\"(?P<hid>.*?)\"";
+
+			// expression for extract lyrics
+			regexp.Compile(regex_hid, IGNORECASE | SINGLELINE);
+
+			pfc::string8_fast hid;
+
+			int codeGroup = regexp.GetNamedGroupNumber("code");
+			int hidGroup = regexp.GetNamedGroupNumber("hid");
+
+			MatchResult result = regexp.Match(buff.get_ptr());
+
+			if (result.IsMatched())
+			{
+				int nStart = result.GetGroupStart(codeGroup);
+				int nEnd = result.GetGroupEnd(codeGroup);
+
+				pfc::string8_fast code(buff.get_ptr() + nStart, nEnd-nStart);
+
+				if (code.find_first("0") == -1)
+					continue;
+
+				nStart = result.GetGroupStart(hidGroup);
+				nEnd = result.GetGroupEnd(hidGroup);
+
+				hid = pfc::string8_fast(buff.get_ptr() + nStart, nEnd - nStart);
+
+				url = "http://77.79.210.222/api_search.php?auth=LeosLyrics5&hid=";
+				url += hid;
+
+				//URL = http://77.79.210.222/api_search.php?auth=LeosLyrics5&hid=<songID>
+
+				try
+				{
+					fetcher.fetch_host(host, url, buff, p_abort);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
+					continue;
+				}
+				catch (...)
+				{
+					continue;
+				}
+
+				const char * regex_hid = "<text>\\s(?P<lyrics>.*?)\\s</text>";
+
+				// expression for extract lyrics
+				regexp.Compile(regex_hid, IGNORECASE | SINGLELINE);
+
+				int lyricsGroup = regexp.GetNamedGroupNumber("lyrics");
+
+				result = regexp.Match(buff.get_ptr());
+
+				if (result.IsMatched())
+				{
+					nStart = result.GetGroupStart(lyricsGroup);
+					nEnd = result.GetGroupEnd(lyricsGroup);
+
+					pfc::string8 lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+					if (lyric.get_length() > 0)
+					{
+						string_helper::remove_beginning_linebreaks(lyric);
+						string_helper::remove_end_linebreaks(lyric);
+
+						return lyric;
+					}
 				}
 			}
 		}
