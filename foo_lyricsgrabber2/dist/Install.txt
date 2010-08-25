@@ -1,0 +1,49 @@
+1. Installation:
+
+	1.1 Installation using Foobar2000's install method (Foobar2000 1.1+):
+		
+		1.1.1 Before Updating:
+			Remove the component in foobar by right-clicking it in the foobar2000 preferences (Components) and choosing "remove".
+
+		1.1.2 Installation:
+			Click "Install..." in the foobar2000 preferences (Components) and choose the foo_lyricsgrabber2.zip file for installation.
+
+		1.1.3 Side note:
+			foo_lyricsgrabber2 will create a "libs" folder in your pygrabber folder at startup.
+
+		1.1.4. Directory Structure:
+			Directory											Description
+			(foobar2000 component folder)\pygrabber\system		Python standard library, extensions and helper modules
+			(foobar2000 component folder)\pygrabber\libs		User python libraries and extension
+			(foobar2000 component folder)\pygrabber\scripts		User scripts
+
+	1.2. Installation the old way (Foobar2000 1.0+):
+		
+		1.2.1. Before Update:
+			If you have previous version installed, make sure you have removed pygrabber\ in your foobar2000 profile folder and/or
+			in your user-components\foo_lyricsgrabber2\ folder
+
+		1.2.2. Install:
+			(1)Put python25.dll and msvcr71.dll into foobar2000\ directory
+			(2)Put foo_lyricsgrabber2.dll into foobar2000\components\ directory
+			(3)Copy pygrabber directory and all its contents to %appdata%\foobar2000\ directory (Foobar2000 Profile)
+
+		1.2.3 Side note:
+			foo_lyricsgrabber2 will create a "libs" folder in your pygrabber folder at startup.
+
+		1.2.4. Directory Structure:
+			Directory											Description
+			(foobar2000 profile folder)\pygrabber\system		Python standard library, extensions and helper modules
+			(foobar2000 profile folder)\pygrabber\libs			User python libraries and extension
+			(foobar2000 profile folder)\pygrabber\scripts		User scripts
+
+2. After Installation or After Updating
+	Go to Foobar's preferences and find under tools "Lyrics Grabber 2". In "Provider", select "Scripts", click "Options" then "Settings".
+	Then, in the foo_grabber_python configuration window, click "Refresh" button, in order to have all scripts updated.
+
+
+3. Remarks:
+	You can reach your profile folder if you type this in the addressbar of Windows Explorer: %appdata%\Foobar2000
+	The "Search All" option in the context menu searches for lyrics using all available built-in lyrics providers.
+	The first provider returning the lyrics will be picked.
+		NOTE: This does not include Python scripts!

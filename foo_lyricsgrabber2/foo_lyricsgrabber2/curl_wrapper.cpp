@@ -136,6 +136,10 @@ void curl_wrapper_simple::fetch(const pfc::string_base & p_url,const pfc::string
 {
 	CURLcode nCode;
 
+	curl_slist list;
+
+	
+
 	curl_easy_setopt(m_curl_handle, CURLOPT_URL, p_url.get_ptr());
 	curl_easy_setopt(m_curl_handle, CURLOPT_REFERER, p_referer.get_ptr());
 

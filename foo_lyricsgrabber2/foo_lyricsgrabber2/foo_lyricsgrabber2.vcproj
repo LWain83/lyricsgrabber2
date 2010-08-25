@@ -137,11 +137,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/Zm132"
 				Optimization="2"
 				AdditionalIncludeDirectories="../"
-				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;CURL_STATICLIB"
+				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;CURL_STATICLIB;BOOST_PYTHON_STATIC_LIB"
 				StringPooling="true"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				FloatingPointModel="2"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
@@ -165,7 +166,7 @@
 				AdditionalDependencies="Ws2_32.lib WinMM.lib shared.lib curllib.lib wldap32.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../shared;../../libs"
-				IgnoreDefaultLibraryNames="libcmt.lib"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -236,6 +237,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\py_class_wrapper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\py_provider.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\py_site.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -261,6 +274,10 @@
 			</File>
 			<File
 				RelativePath=".\task.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ui_conf.cpp"
 				>
 			</File>
 			<File
@@ -313,6 +330,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\py_class_wrapper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\py_provider.h"
+				>
+			</File>
+			<File
+				RelativePath=".\py_site.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>
@@ -330,6 +359,10 @@
 			</File>
 			<File
 				RelativePath=".\task.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ui_conf.h"
 				>
 			</File>
 			<File

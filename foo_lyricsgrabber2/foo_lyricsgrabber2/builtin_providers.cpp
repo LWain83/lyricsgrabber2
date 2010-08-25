@@ -38,6 +38,7 @@ FORCEINLINE void how_to_sleep(t_size p_items)
 //************************************************************************
 pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_searchall::lookup");
 	pfc::string_list_impl * str_list = new pfc::string_list_impl;
 	const grabber::provider_ptr_list list = host_impl::g_get_provider_list();
 
@@ -381,6 +382,8 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 //************************************************************************
 pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_darklyrics::lookup");
+
 	const float threshold = 0.8f;
 
 	const pfc::string8 site = "darklyrics.com";
@@ -590,6 +593,8 @@ pfc::string_list_impl * provider_darklyrics::lookup(unsigned p_index, metadb_han
 }
 pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_darklyrics::lookup_one");
+
 	const float threshold = 0.8f;
 	
 	const pfc::string8 site = "darklyrics.com";
@@ -758,6 +763,7 @@ pfc::string8 provider_darklyrics::lookup_one(unsigned p_index, const metadb_hand
 //************************************************************************
 pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_azlyrics::lookup");
 	const float threshold = 0.8f;
 
 	// Regular Expression Class
@@ -929,6 +935,8 @@ pfc::string_list_impl * provider_azlyrics::lookup(unsigned p_index, metadb_handl
 }
 pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_azlyrics::lookup_one");
+
 	const float threshold = 0.8f;
 
 	// Regular Expression Class
@@ -1069,6 +1077,8 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 //************************************************************************
 pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_lyrdb::lookup");
+
 	const float threshold = 0.8;
 	// Regular Expression Class
 	CRegexpT<char> regexp;
@@ -1278,6 +1288,8 @@ pfc::string_list_impl * provider_lyrdb::lookup(unsigned p_index, metadb_handle_l
 }
 pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_lyrdb::lookup_one");
+
 	const float threshold = 0.8;
 	// Regular Expression Class
 	CRegexpT<char> regexp;
@@ -1432,6 +1444,8 @@ pfc::string8 provider_lyrdb::lookup_one(unsigned p_index, const metadb_handle_pt
 //************************************************************************
 pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_handle_list_cref p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_lyricwiki::lookup");
+
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
@@ -1591,6 +1605,7 @@ pfc::string_list_impl * provider_lyricwiki::lookup(unsigned p_index, metadb_hand
 }
 pfc::string8 provider_lyricwiki::lookup_one(unsigned p_index, const metadb_handle_ptr & p_meta, threaded_process_status & p_status, abort_callback & p_abort)
 {
+	TRACK_CALL_TEXT("provider_lyricwiki::lookup_one");
 	// Regular Expression Class
 	CRegexpT<char> regexp;
 
