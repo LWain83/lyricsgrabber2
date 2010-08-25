@@ -24,6 +24,9 @@
 #include <atlddx.h>
 #include <atlmisc.h>
 
+#include <string>
+#include <boost/python.hpp>
+
 #include "../../SDK/foobar2000.h"
 #include "../../lyrics_grabber_sdk/lyrics_grabber_sdk.h"
 

@@ -68,6 +68,20 @@ BEGIN
     LTEXT           "(e.g. $if($stricmp(%codec%,mp3),UNSYNCED LYRICS,LYRICS))",IDC_STATIC,49,98,206,8
 END
 
+IDD_CONF DIALOGEX 0, 0, 280, 224
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Settings"
+FONT 8, "Tahoma", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,223,203,50,14
+    GROUPBOX        "Scripts",IDC_STATIC,7,7,266,148
+    CONTROL         "",IDC_LIST_SCRIPTS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,14,18,252,130
+    PUSHBUTTON      "&Refresh",IDC_BUTTON_REFRESH,7,203,46,14
+    EDITTEXT        IDC_EDIT_CUSTOM_LIBPATH,99,162,174,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_CUSTOM_SCRIPTPATH,99,182,174,14,ES_AUTOHSCROLL
+    LTEXT           "Additional library path:",IDC_STATIC,21,164,74,8
+    LTEXT           "Additional script path:",IDC_STATIC,24,186,71,8
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -91,6 +105,13 @@ BEGIN
         RIGHTMARGIN, 259
         TOPMARGIN, 7
         BOTTOMMARGIN, 258
+    END
+    IDD_CONF, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 273
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 217
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -135,6 +156,16 @@ BEGIN
         MENUITEM "&Website",                    ID_POPUP_WEBSITE
     END
 END
+
+IDR_MENU_CONTEXT MENU 
+BEGIN
+    POPUP "Popup"
+    BEGIN
+        MENUITEM "&Description",                ID_POPUP_DESCRIPTION
+        MENUITEM "W&ebsite",                    ID_POPUP_WEBSITE
+    END
+END
+
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
