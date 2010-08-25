@@ -136,10 +136,6 @@ void curl_wrapper_simple::fetch(const pfc::string_base & p_url,const pfc::string
 {
 	CURLcode nCode;
 
-	curl_slist list;
-
-	
-
 	curl_easy_setopt(m_curl_handle, CURLOPT_URL, p_url.get_ptr());
 	curl_easy_setopt(m_curl_handle, CURLOPT_REFERER, p_referer.get_ptr());
 
@@ -157,6 +153,30 @@ void curl_wrapper_simple::fetch(const pfc::string_base & p_url,const pfc::string
 	}
 }
 
+void curl_wrapper_simple::fetch_host(const pfc::string_base & p_host, const pfc::string_base & p_url, pfc::string_base & p_out, abort_callback & p_abort)
+{
+	http_client::ptr client;
+	pfc::string8_fast host = "Host: ";
+	host += p_host;
+
+	if (!service_enum_t<http_client>().first(client))
+		p_out = "";
+
+	http_request::ptr request = client->create_request("GET");
+
+	request->add_header(host);
+
+	file::ptr file_ptr = request->run(p_url, p_abort);
+
+	char buffer[1025];
+    t_size bytes_read;
+
+    while (bytes_read = file_ptr->read(buffer, 1024, p_abort)) 
+	{
+        p_out.add_string(buffer, bytes_read);
+	}
+}
+
 void curl_wrapper_simple::fetch_googleluck(const pfc::string_base & p_site, const pfc::string_base & p_keywords, pfc::string_base & p_out)
 {
 	CURLcode nCode;
@@ -171,3 +191,4 @@ void curl_wrapper_simple::fetch_googleluck(const pfc::string_base & p_site, cons
 
 	fetch(url, url, p_out);
 }
+
