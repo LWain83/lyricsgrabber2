@@ -10,13 +10,13 @@
 #include "host_impl.h"
 
 
-//static grabber::provider_factory<provider_lyricsplugin> g_lyricsplugin;
 static grabber::provider_factory<provider_searchall> g_searchall;
+//static grabber::provider_factory<provider_lyricsplugin> g_lyricsplugin;
 static grabber::provider_factory<provider_darklyrics> g_darklyrics;
-static grabber::provider_factory<provider_azlyrics> g_azlyrics;
+static grabber::provider_factory<provider_leoslyrics> g_leoslyrics;
 static grabber::provider_factory<provider_lyrdb> g_lyrdb;
 static grabber::provider_factory<provider_lyricwiki> g_lyricwiki;
-static grabber::provider_factory<provider_leoslyrics> g_leoslyrics;
+static grabber::provider_factory<provider_azlyrics> g_azlyrics;
 
 FORCEINLINE void how_to_sleep(t_size p_items)
 {
@@ -92,6 +92,9 @@ pfc::string_list_impl * provider_searchall::lookup(unsigned p_index, metadb_hand
 				{
 					buffer = list[j]->lookup_one(j, p, p_status, p_abort);
 					
+					if (buffer.find_first("[...]") != -1)
+						continue;
+
 					if (buffer.get_length() != 0)
 						break;
 				}
@@ -170,83 +173,88 @@ pfc::string_list_impl * provider_lyricsplugin::lookup(unsigned p_index, metadb_h
 			static_api_ptr_t<titleformat_compiler> compiler;
 			service_ptr_t<titleformat_object> script;
 
-			// Get ARTIST
-			compiler->compile_safe(script, "[%artist%]");
-			p->format_title(NULL, artist, script, NULL);
+			file_info_impl info;
+			p->get_info(info);
+
+			// Get count of artists
+			t_size count = info.meta_get_count_by_name("artist");
+
 			// Get TITLE
 			compiler->compile_safe(script, "[%title%]");
 			p->format_title(NULL, title, script, NULL);
 
-			// Fetching from HTTP
-			// Set HTTP Address
-			pfc::string8_fast url("http://www.lyricsplugin.com/winamp03/plugin/content.php?artist=");
-			pfc::string8_fast referer("http://www.lyricsplugin.com/winamp03/plugin/?artist=");
-			
-			// URL = http://www.lyricsplugin.com/winamp03/plugin/content.php?artist=<artist>&title=<title>&td=<timestamp>
-			// REFERER = http://www.lyricsplugin.com/winamp03/plugin/?artist=<artist>&title=<title>
-			
-			url += fetcher.quote(artist);
-			url += "&title=";
-			url += fetcher.quote(title);
+			bool found = false;
 
-			referer += fetcher.quote(artist);
-			referer += "&title=";
-			referer += fetcher.quote(title);
-
-			// Get it now
-			try
+			// Iterate through all artists listed
+			for (int j = 0; j < count && !found; j++)
 			{
-				fetcher.fetch(url, referer, buff);
-			}
-			catch (pfc::exception & e)
-			{
-				console_error(e.what());
-				str_list->add_item("");
-				continue;
-			}
-			catch (...)
-			{
-				str_list->add_item("");
-				continue;
-			}
+				// Get Artist
+				artist = info.meta_get("artist", j);
+				// Fetching from HTTP
+				// Set HTTP Address
+				pfc::string8_fast url("http://www.squirrelscript.net/mediamonkey/Lyricator/lyrics.php?artist=");
 
-			const char * regex_lyricbox = "<div\\s+id\\s*?=\\s*?\"lyrics\"\\s*?>[\\r\\n]*(.*?)[\\r\\n]*</div>";
+				// URL = http://www.squirrelscript.net/mediamonkey/Lyricator/lyrics.php?artist=<Artist>&title=<Title>
 
-			// expression for extract lyrics
-			regexp.Compile(regex_lyricbox, SINGLELINE);
+				url += fetcher.quote(artist);
+				url += "&title=";
+				url += fetcher.quote(title);
 
-			// match
-			MatchResult result = regexp.Match(buff.get_ptr());
-
-			// Get Group
-			if (result.IsMatched())
-			{
-				int nStart = result.GetGroupStart(1);
-				int nEnd = result.GetGroupEnd(1);
-				int index;
-				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
-
-				convert_html_to_plain(lyric);
-
-				index = lyric.find_first("www.tunerankings.com");
-
-				if (index == 0)
+				// Get it now
+				try
 				{
-					str_list->add_item("");
+					fetcher.fetch(url, buff);
+				}
+				catch (pfc::exception & e)
+				{
+					console_error(e.what());
 					continue;
 				}
-				else if (index != -1)
+				catch (...)
 				{
-					lyric.remove_chars(index, 20);
-				}
-
-				if (string_trim(lyric).get_length() > 0)
-				{
-					str_list->add_item(lyric);
 					continue;
 				}
+
+				const char * regex_lyricbox = "<div\\s+id\\s*?=\\s*?\"lyrics\"\\s*?>[\\r\\n]*(.*?)[\\r\\n]*</div>";
+
+				// expression for extract lyrics
+				regexp.Compile(regex_lyricbox, SINGLELINE);
+
+				// match
+				MatchResult result = regexp.Match(buff.get_ptr());
+
+				// Get Group
+				if (result.IsMatched())
+				{
+					int nStart = result.GetGroupStart(1);
+					int nEnd = result.GetGroupEnd(1);
+					int index;
+					pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+					convert_html_to_plain(lyric);
+
+					index = lyric.find_first("www.tunerankings.com");
+
+					if (index == 0)
+					{
+						continue;
+					}
+					else if (index != -1)
+					{
+						lyric.remove_chars(index, 20);
+					}
+
+					if (string_trim(lyric).get_length() > 0)
+					{
+						str_list->add_item(lyric);
+						continue;
+					}
+				}
 			}
-			str_list->add_item("");
+			if (found)
+				continue;
+			else
+				str_list->add_item("");
 		}
 	}
 	catch (pfc::exception & e)
@@ -292,76 +300,81 @@ pfc::string8 provider_lyricsplugin::lookup_one(unsigned p_index, const metadb_ha
 		static_api_ptr_t<titleformat_compiler> compiler;
 		service_ptr_t<titleformat_object> script;
 
-		// Get ARTIST
-		compiler->compile_safe(script, "[%artist%]");
-		p->format_title(NULL, artist, script, NULL);
+		file_info_impl info;
+		p->get_info(info);
+
+		// Get count of artists
+		t_size count = info.meta_get_count_by_name("artist");
+
 		// Get TITLE
 		compiler->compile_safe(script, "[%title%]");
 		p->format_title(NULL, title, script, NULL);
 
-		// Fetching from HTTP
-		// Set HTTP Address
-		pfc::string8_fast url("http://www.lyricsplugin.com/winamp03/plugin/content.php?artist=");
-		pfc::string8_fast referer("http://www.lyricsplugin.com/winamp03/plugin/?artist=");
+		bool found = false;
 
-		// URL = http://www.lyricsplugin.com/winamp03/plugin/content.php?artist=<artist>&title=<title>&td=<timestamp>
-		// REFERER = http://www.lyricsplugin.com/winamp03/plugin/?artist=<artist>&title=<title>
-
-		url += fetcher.quote(artist);
-		url += "&title=";
-		url += fetcher.quote(title);
-
-		referer += fetcher.quote(artist);
-		referer += "&title=";
-		referer += fetcher.quote(title);
-
-		// Get it now
-		try
+		// Iterate through all artists listed
+		for (int j = 0; j < count && !found; j++)
 		{
-			fetcher.fetch(url, referer, buff);
-		}
-		catch (pfc::exception & e)
-		{
-			console_error(e.what());
-			return "";
-		}
-		catch (...)
-		{
-			return "";
-		}
+			// Get Artist
+			artist = info.meta_get("artist", j);
+			// Fetching from HTTP
+			// Set HTTP Address
+			pfc::string8_fast url("http://www.squirrelscript.net/mediamonkey/Lyricator/lyrics.php?artist=");
 
-		const char * regex_lyricbox = "<div\\s+id\\s*?=\\s*?\"lyrics\"\\s*?>[\\r\\n]*(.*?)[\\r\\n]*</div>";
+			// URL = http://www.squirrelscript.net/mediamonkey/Lyricator/lyrics.php?artist=<Artist>&title=<Title>
 
-		// expression for extract lyrics
-		regexp.Compile(regex_lyricbox, SINGLELINE);
+			url += fetcher.quote(artist);
+			url += "&title=";
+			url += fetcher.quote(title);
 
-		// match
-		MatchResult result = regexp.Match(buff.get_ptr());
-
-		// Get Group
-		if (result.IsMatched())
-		{
-			int nStart = result.GetGroupStart(1);
-			int nEnd = result.GetGroupEnd(1);
-			int index;
-			pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
-
-			convert_html_to_plain(lyric);
-
-			index = lyric.find_first("www.tunerankings.com");
-
-			if (index == 0)
+			// Get it now
+			try
 			{
-				return "";
+				fetcher.fetch(url, buff);
 			}
-			else if (index != -1)
+			catch (pfc::exception & e)
 			{
-				lyric.remove_chars(index, 20);
+				console_error(e.what());
+				continue;
+			}
+			catch (...)
+			{
+				continue;
 			}
 
-			if (string_trim(lyric).get_length() > 0)
+			const char * regex_lyricbox = "<div\\s+id\\s*?=\\s*?\"lyrics\"\\s*?>[\\r\\n]*(.*?)[\\r\\n]*</div>";
+
+			// expression for extract lyrics
+			regexp.Compile(regex_lyricbox, SINGLELINE);
+
+			// match
+			MatchResult result = regexp.Match(buff.get_ptr());
+
+			// Get Group
+			if (result.IsMatched())
 			{
-				return lyric;
+				int nStart = result.GetGroupStart(1);
+				int nEnd = result.GetGroupEnd(1);
+				int index;
+				pfc::string8_fast lyric(buff.get_ptr() + nStart, nEnd - nStart);
+
+				convert_html_to_plain(lyric);
+
+				index = lyric.find_first("www.tunerankings.com");
+
+				if (index == 0)
+				{
+					continue;
+				}
+				else if (index != -1)
+				{
+					lyric.remove_chars(index, 20);
+				}
+
+				if (string_trim(lyric).get_length() > 0)
+				{
+					return lyric;
+				}
 			}
 		}
 	}
@@ -948,6 +961,7 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 
 	try
 	{
+		TRACK_CALL_TEXT("Try");
 		// Init fetcher
 		curl_wrapper_simple fetcher(&m_config_item);
 
@@ -974,8 +988,11 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 		// Iterate through all artists listed
 		for (int j = 0; j < count; j++)
 		{
+			TRACK_CALL_TEXT("For");
 			// Get Artist
 			artist = info.meta_get("artist", j);
+
+			console::printf("%s - %s", artist, title);
 
 			// Search the lyrics
 			pfc::string8_fast url("http://search.azlyrics.com/search.php?q=");
@@ -999,6 +1016,9 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 				continue;
 			}
 
+			if (buff.get_length() == 0)
+				continue;
+
 			int resultStart = buff.find_first("<b>1.</b>");
 			int startUrl = buff.find_first("<a href=\"", resultStart) + 9;
 			int endUrl = buff.find_first("\"", startUrl);
@@ -1019,6 +1039,9 @@ pfc::string8 provider_azlyrics::lookup_one(unsigned p_index, const metadb_handle
 			{
 				continue;
 			}
+
+			if (buff.get_length() == 0)
+				continue;
 
 			const char * regex_lyrics = "<!-- END OF RINGTONE 1 -->\\s*?<b>\"(?P<title>.*?)\"</b><br>\\s*?<br>\\s\\s(?P<lyrics>.*?)\\s<br>";
 
